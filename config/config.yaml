@@ -1,0 +1,23 @@
+
+source_formats:
+  treat_as_markdown: [".md"]
+classification_rules:
+  by_filename:
+    - pattern: "*HOWTO*.md"
+      topic_type: "task"
+  by_content:
+    - pattern: "Parameters:"
+      topic_type: "reference"
+chunking:
+  level: 1
+  nested_topics: true
+dita_output:
+  dita_version: "1.3"
+  use_specialization: false
+  output_folder: "build/out"
+  map_title: "Documentation Set"
+tooling:
+  pandoc_path: "pandoc"      # ensure pandoc is installed or mock in tests
+  oxygen_scripts_dir: null   # optional: '/Applications/Oxygen XML Editor/tools/scripts'
+  saxon_jar: "saxon-he.jar"  # path to Saxon jar if used
+  java_path: "java"

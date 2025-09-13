@@ -59,7 +59,7 @@ RuntimeError: Timed out while attempting to connect to ephemeral Prefect API ser
 
 If you encounter this:
 
-### Option A — Run a dedicated Prefect server (recommended)
+### Option A: Run a dedicated Prefect server (recommended)
 
 1. In a separate terminal, start a Prefect server:
 
@@ -89,7 +89,7 @@ If you encounter this:
    python scripts/cli.py --config config/config.yaml --input sample_data/input
    ```
 
-### Option B — Pin Prefect to 2.x (simpler, stable local mode)
+### Option B: Pin Prefect to 2.x (simpler, stable local mode)
 
 If you prefer not to run a server, you can use a stable 2.x release of Prefect which doesn’t rely on the ephemeral API:
 

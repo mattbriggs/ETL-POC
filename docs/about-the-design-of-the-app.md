@@ -60,19 +60,19 @@ flowchart LR
 
   subgraph Stage1 [Extract]
     E0[Format Detector] --> E1[Pandoc / Oxygen / CLI]
-    E1 --> E2[Intermediate (DocBook/HTML5)]
+    E1 --> E2[Intermediate DocBook/HTML5]
   end
 
   subgraph Stage2 [Transform]
     T0[XSLT/Saxon<br/>DocBook &rarr; DITA] --> T1[Topic Splitter]
-    T1 --> T2[Classification Router<br/>(concept/task/reference)]
+    T1 --> T2[Classification Router concept/task/reference]
   end
 
   subgraph Stage3 [Load]
     L0[DITA Map Builder] --> L1[Output Folder]
   end
 
-  %% Connect concrete nodes, not subgraphs
+  %% Link concrete nodes, not subgraphs
   A3 -- plans/*.conversion_plan.json --> T1
   E2 -- intermediate/*.xml --> T0
   T2 -- *.dita/.ditamap --> L0

@@ -1,5 +1,5 @@
 
-# Design & Maintenance
+# Design and Maintenance
 
 
 This design keeps the pipeline **predictable, observable, and evolvable**. The assessment stage isn’t a report for curiosity; it’s a **contracted, machine-consumable gate** that drives chunking and classification decisions, cuts waste by deduping early, and lets you prioritize fixes where they’ll save the most effort.

@@ -1,0 +1,27 @@
+intermediate: "docbook5"
+shingling:
+  stopwords: null
+  ngram: 7
+  minhash_num_perm: 64
+  threshold: 0.88
+scoring:
+  topicization_weights:
+    heading_ladder_valid: 10
+    avg_section_len_target: 15
+    tables_simple: 10
+    lists_depth_ok: 10
+    images_with_alt: 5
+  risk_weights:
+    deep_nesting: 20
+    complex_tables: 25
+    unresolved_anchors: 15
+    mixed_inline_blocks: 10
+classification:
+  task_keywords: ["click","run","open","select","type","press"]
+  task_landmarks: ["prerequisites","steps","results","troubleshooting"]
+  reference_markers: ["parameters","options","syntax","defaults"]
+duplication:
+  prefer_paths: []
+  action: "propose"
+limits:
+  target_section_tokens: [50, 500]

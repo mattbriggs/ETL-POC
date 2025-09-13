@@ -15,7 +15,7 @@
 ```mermaid
 flowchart LR
   A[Source Corpus] --> B[Extractors]
-  B --> C[Canonical Interchange Model (CIM)]
+  B --> C[Canonical Interchange Model CIM]
   C --> D[Normalization]
   D --> E[Chunking & Topicization]
   E --> F[Mapping to DITA Domain/Info Types]

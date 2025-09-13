@@ -81,12 +81,7 @@ python scripts/cli.py --config config/config.yaml --input /absolute/path/to/mark
 - **Classification:** Heuristics route sections to concept/task/reference; tune in `config/assess.yaml`.
 - **Media:** Keep images next to source Markdown; relative links like `![alt](images/foo.png)` are preserved.
 
-# 3) (Optional) README appendix for Markdown-first usage
-
-Add this to `README.md`:
-
-```md
-## Markdown-first usage
+### Markdown-first usage
 
 The pipeline ingests Markdown out of the box. We normalize with Pandoc’s **GitHub-Flavored Markdown** reader (`-f gfm`) before converting to DocBook and then DITA.
 

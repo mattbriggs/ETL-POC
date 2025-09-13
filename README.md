@@ -44,3 +44,71 @@ Edit `config/config.yaml` to adjust:
 ## Notes
 - The provided XSLT (`xsl/docbook2dita.xsl`) is a placeholder. Replace with your DocBook->DITA mapping stylesheet or invoke Oxygen's Batch Converter for direct DITA output.
 - External tool calls are wrapped behind a `SubprocessRunner` to ease mocking and testing.
+
+## Running with Prefect (Important)
+
+By default this project uses [Prefect](https://docs.prefect.io) to orchestrate the ETL pipeline.
+
+### Prefect Ephemeral Server Issue on macOS
+
+On macOS, Prefect 3.x sometimes fails to start its **ephemeral API server** with an error like:
+
+```
+RuntimeError: Timed out while attempting to connect to ephemeral Prefect API server.
+```
+
+If you encounter this:
+
+### Option A — Run a dedicated Prefect server (recommended)
+
+1. In a separate terminal, start a Prefect server:
+
+   ```bash
+   prefect server start
+   ```
+
+   By default it runs at: http://127.0.0.1:4200
+
+   You can use the same virtual environment (`venv`) where you installed the package, but in a seperate terminaal.
+
+   ```bash
+   cd path/to/your/project
+   source ./ENV/bin/activate
+   perfect server start
+   ```
+
+2. In the shell where you will run the ETL pipeline, set the Prefect API URL:
+
+   ```bash
+   export PREFECT_API_URL="http://127.0.0.1:4200/api"
+   ```
+
+3. Run the CLI from the project root (with your venv activated):
+
+   ```bash
+   python scripts/cli.py --config config/config.yaml --input sample_data/input
+   ```
+
+### Option B — Pin Prefect to 2.x (simpler, stable local mode)
+
+If you prefer not to run a server, you can use a stable 2.x release of Prefect which doesn’t rely on the ephemeral API:
+
+```bash
+python -m pip install "prefect==2.16.9"
+```
+
+Then run the CLI as usual:
+
+```bash
+python scripts/cli.py --config config/config.yaml --input sample_data/input
+```
+
+### Notes on Perfect and Virtual Environments
+
+- Always run using the **same Python interpreter** where you installed the package (`pip install -e .`).  
+- If you use VS Code, select your venv under: *Command Palette → Python: Select Interpreter*.  
+- Verify Prefect version with:
+
+  ```bash
+  python -c "import prefect; print(prefect.__version__)"
+  ```

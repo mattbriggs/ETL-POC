@@ -80,9 +80,6 @@ python scripts/cli.py --config config/config.yaml --input /absolute/path/to/mark
 - **Topic boundaries:** `#` becomes a new topic; `##+` become sections. Adjust in `plans/*.conversion_plan.json` if needed.
 - **Classification:** Heuristics route sections to concept/task/reference; tune in `config/assess.yaml`.
 - **Media:** Keep images next to source Markdown; relative links like `![alt](images/foo.png)` are preserved.
-```
-
----
 
 # 3) (Optional) README appendix for Markdown-first usage
 

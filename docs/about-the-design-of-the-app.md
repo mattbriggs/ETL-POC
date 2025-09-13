@@ -52,29 +52,30 @@ Here’s an expanded, nuts-and-bolts design you can drop into `docs/design.md` (
 
 ```mermaid
 flowchart LR
-  subgraph Stage0[Assessment]
+  subgraph Stage0 [Assessment]
     A0[Inventory Builder] --> A1[Duplicate Detector]
     A1 --> A2[Readiness & Risk Scorer]
     A2 --> A3[Conversion Plan Emitter]
   end
 
-  subgraph Stage1[Extract]
+  subgraph Stage1 [Extract]
     E0[Format Detector] --> E1[Pandoc / Oxygen / CLI]
     E1 --> E2[Intermediate (DocBook/HTML5)]
   end
 
-  subgraph Stage2[Transform]
-    T0[XSLT/Saxon\nDocBook→DITA] --> T1[Topic Splitter]
-    T1 --> T2[Classification Router\n(concept/task/reference)]
+  subgraph Stage2 [Transform]
+    T0[XSLT/Saxon<br/>DocBook &rarr; DITA] --> T1[Topic Splitter]
+    T1 --> T2[Classification Router<br/>(concept/task/reference)]
   end
 
-  subgraph Stage3[Load]
+  subgraph Stage3 [Load]
     L0[DITA Map Builder] --> L1[Output Folder]
   end
 
-  Stage0 -->|plans/*.conversion_plan.json| Stage2
-  Stage1 -->|intermediate/*.xml| Stage2
-  Stage2 -->|*.dita/.ditamap| Stage3
+  %% Connect concrete nodes, not subgraphs
+  A3 -- plans/*.conversion_plan.json --> T1
+  E2 -- intermediate/*.xml --> T0
+  T2 -- *.dita/.ditamap --> L0
 ```
 
 - **Orchestrator:** Prefect flow (`build_flow`) wires the stages. Each stage is a **Strategy** (OOP) with a common interface `Stage.run(inputs) -> StageResult`.

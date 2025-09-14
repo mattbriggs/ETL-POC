@@ -5,7 +5,7 @@
 - **Contracts over tools**: components communicate via documented schemas, not library quirks.
 - **Deterministic**: same inputs, same outputs. Hash every step.
 - **Config-first**: mappings, taxonomies, chunk rules, and output flavors live in versioned YAML/JSON.
-- **Graceful degradation**: partial extractions don’t block the whole run; quarantine bad records.
+- **Graceful degradation**: partial extractions don't block the whole run; quarantine bad records.
 - **Testable**: every stage has fixtures and golden files.
 
 ---
@@ -36,7 +36,7 @@ A minimal, tool-neutral JSON structure every extractor must emit.
 ```json
 {
   "doc_id": "stable-id",
-  "source_meta": {"path": "…", "format": "md|docx|html|pdf|…", "mtime": "…"},
+  "source_meta": {"path": " ", "format": "md|docx|html|pdf| ", "mtime": " "},
   "title": "string",
   "blocks": [
     {"type":"heading","level":2,"text":"...","id":"..."},
@@ -63,12 +63,12 @@ After normalization and before DITA mapping:
     {
       "topic_id":"t-001",
       "topic_role":"concept|task|reference|generic",
-      "title":"…",
-      "prolog": {"keywords":["…"], "audience":["…"], "product":["…"]},
+      "title":" ",
+      "prolog": {"keywords":[" "], "audience":[" "], "product":[" "]},
       "body":[ /* block list like CIM, but cleaned */ ],
       "relations":[
-        {"rel":"xref","target_id":"t-002","text":"See also …"},
-        {"rel":"media","path":"media/fig-1.png","alt":"…"}
+        {"rel":"xref","target_id":"t-002","text":"See also  "},
+        {"rel":"media","path":"media/fig-1.png","alt":" "}
       ]
     }
   ],
@@ -84,7 +84,7 @@ After normalization and before DITA mapping:
 - **Responsibility**: parse native format into CIM.
 - **Adapters**: md, docx, html, pdf+OCR, gdocs export, pptx, Confluence export, bespoke CMS dumps.
 - **Rules**:
-  - Never guess structure beyond what’s present. Don’t invent headings from bold text unless configured.
+  - Never guess structure beyond what's present. Don't invent headings from bold text unless configured.
   - Emit unparsed residues to `blocks:[{type:"raw", format:"...", data:"..."}]` for later handling.
 
 **Extractor Interface (pseudocode)**:
@@ -360,12 +360,12 @@ def run_pipeline(cfg):
 ## 13) What you can swap in without breaking the contract
 - Extractors: Pandoc, python-docx, jsdom, Tika, custom HTML scrapers, OCR engines
 - Normalization: your own AST walkers, regex passes, language detectors
-- Validation: Xerces, Jing, Saxon + Schematron, DITA-OT’s preprocessor
+- Validation: Xerces, Jing, Saxon + Schematron, DITA-OT's preprocessor
 - Orchestration: Make, Nix, Airflow, Prefect, plain Python CLI, whatever helps you sleep
 
 ---
 
-## 14) Deliverables Checklist (so this doesn’t sprawl)
+## 14) Deliverables Checklist (so this doesn't sprawl)
 - `schemas/` for CIM and NTM (JSON Schema)  
 - `config/` with sample `sources.yaml`, `chunking.yaml`, `mapping.dita.yaml`  
 - `schematron/` with at least 5 core rules  

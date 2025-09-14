@@ -10,7 +10,7 @@ This document outlines the roadmap for evolving the ETL pipeline from the curren
 
 - **Core ETL Stages**  
   - **Extract**: Pandoc used for Markdown and HTML inputs, producing DocBook intermediates.  
-  - **Transform**: Placeholder XSLT pipeline (DocBook → DITA).  
+  - **Transform**: Placeholder XSLT pipeline (DocBook -> DITA).  
   - **Load**: Generates a single DITA map referencing output topics.
 
 - **Configuration**  
@@ -37,7 +37,7 @@ This document outlines the roadmap for evolving the ETL pipeline from the curren
 
 - **Semantic Enrichment**  
   - Enhance classification with NLP-based heuristics (e.g., imperative detection, glossary recognition).  
-  - Add metadata mapping: author, product version, taxonomy terms → DITA attributes.
+  - Add metadata mapping: author, product version, taxonomy terms -> DITA attributes.
 
 ## Phase 4: Quality and Monitoring
 

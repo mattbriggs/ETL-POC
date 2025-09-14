@@ -8,10 +8,10 @@ The assessment is designed for support staff and engineers working with Componen
 
 The Assessment Stage scans your source documents (Markdown, HTML, DOCX, etc.) and produces:
 
-- **`inventory.json`** — machine-readable metrics for every file.
-- **`dedupe_map.json`** — clusters of duplicate and near-duplicate documents.
-- **`plans/*.conversion_plan.json`** — per-file guidance for how to chunk content and classify topics.
-- **`report.html`** — a human-readable dashboard that summarizes risk and readiness.
+- **`inventory.json`** - machine-readable metrics for every file.
+- **`dedupe_map.json`** - clusters of duplicate and near-duplicate documents.
+- **`plans/*.conversion_plan.json`** - per-file guidance for how to chunk content and classify topics.
+- **`report.html`** - a human-readable dashboard that summarizes risk and readiness.
 
 This gives you an **evidence-based preview** of conversion complexity and identifies documents that require cleanup or deduplication before automated conversion to DITA.
 
@@ -81,12 +81,12 @@ The assessment will run as Stage 0, producing artifacts under:
 
 ```
 build/assess/
-  ├── inventory.json
-  ├── dedupe_map.json
-  ├── report.html
-  └── plans/
-      ├── file1.md.conversion_plan.json
-      ├── file2.docx.conversion_plan.json
+      inventory.json
+      dedupe_map.json
+      report.html
+      plans/
+          file1.md.conversion_plan.json
+          file2.docx.conversion_plan.json
       ...
 ```
 
@@ -126,10 +126,10 @@ You can feed these into the transformation stage to influence DITA output.
 
 ## 5. Using Assessment Results to Improve ETL
 
-1. **Deduplication** — Quarantine duplicates before feeding into Extract/Transform. This avoids wasted effort and redundant topics in DITA.
-2. **Chunking Strategy** — Adjust conversion rules based on readiness scores. Poor scores often mean inconsistent heading usage; fix these in the source.
-3. **Classification Tuning** — Update `assess.yaml` classification rules when predictions don't match your authoring model.
-4. **Prioritization** — High-risk files should be reviewed manually before conversion; low-risk files can be converted automatically.
+1. **Deduplication** - Quarantine duplicates before feeding into Extract/Transform. This avoids wasted effort and redundant topics in DITA.
+2. **Chunking Strategy** - Adjust conversion rules based on readiness scores. Poor scores often mean inconsistent heading usage; fix these in the source.
+3. **Classification Tuning** - Update `assess.yaml` classification rules when predictions don't match your authoring model.
+4. **Prioritization** - High-risk files should be reviewed manually before conversion; low-risk files can be converted automatically.
 
 ## 6. Best Practices
 

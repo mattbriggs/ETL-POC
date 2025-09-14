@@ -12,6 +12,7 @@ About the ETL pipeline, how to run it, and how to interpret results.
 
 - [How to Run the DITA ETL Pipeline on a Folder of Markdown Files](manual/etl-how-to-markdown.md)
 - [How To: Configure and Read the ETL Assessment](manual/etl-how-to-read-the-assessment.md)
+- [How To: Change the Extractor for “Specify source content”](manual/how-to-change-extractor-specify-source-content.md)
 
 ## White papers on ETL and DITA
 

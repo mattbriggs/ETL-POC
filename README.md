@@ -115,15 +115,5 @@ python scripts/cli.py --config config/config.yaml --input sample_data/input
 
 ## Documentation
 
-See the [docs/](docs/) folder for design docs, class diagrams, and more.
+See the [docs](docs/index.md) folder for design docs, class diagrams, and more.
 
-- [Design and Maintenance](docs/about-the-design-of-the-app.md)
-- [How to Run the DITA ETL Pipeline on a Folder of Markdown Files](docs/etl-how-to-markdown.md)
-- [How To: Configure and Read the ETL Assessment](docs/etl-how-to-read-the-assessment.md)
-- [ETL Pipeline User Manual: Converting Unstructured Content to DITA](docs/etl-user-manual.md)
-- [Development of the ETL Process](docs/project.md)
-
-## White Papers
-
-- [Content-to-DITA ETL: Vendor-Neutral, Modular Architecture](docs/etl-design-and-structure.md)
-- [ETL Pipeline for Converting Multiple Formats to DITA 1.3](docs/etl-pipeline-overview.md)

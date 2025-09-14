@@ -21,3 +21,6 @@ tooling:
   oxygen_scripts_dir: null   # optional: '/Applications/Oxygen XML Editor/tools/scripts'
   saxon_jar: "saxon-he.jar"  # path to Saxon jar if used
   java_path: "java"
+extract:
+  handler_overrides:
+    ".docx": "oxygen-docx"   # switch docx to Oxygen without code changes

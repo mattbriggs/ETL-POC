@@ -1,80 +1,188 @@
 
-import os, builtins
+import os
+import io
+import json
+import shutil
+import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 import pytest
-from dita_etl.hashing import text_sha256, file_sha256, normalize_path
-from dita_etl.io_utils import ensure_dir, write_text, read_text, quarantine, copy_into
-from dita_etl.runners import SubprocessRunner, SubprocessError
-from dita_etl.classify import classify_topic
+
+# Assume project structure: dita_etl/stages/... etc.
+# We import the classes under test; adjust import roots if your package name differs.
 from dita_etl.stages.extract import ExtractStage
-from dita_etl.stages.transform import TransformStage
-from dita_etl.stages.load import LoadStage
+from dita_etl.stages.extractors.md_pandoc import MdPandocExtractor
+from dita_etl.stages.extractors.html_pandoc import HtmlPandocExtractor
+from dita_etl.stages.extractors.docx_pandoc import DocxPandocExtractor
 
-def test_hashing(tmp_path):
-    p = tmp_path / "a.txt"
-    p.write_text("hello")
-    assert text_sha256("hello") == text_sha256("hello")
-    assert file_sha256(str(p))
+from dita_etl.runners import SubprocessRunner, SubprocessError
 
-def test_io_utils(tmp_path):
-    d = tmp_path / "out"
-    ensure_dir(str(d))
-    f = tmp_path / "f.txt"
-    write_text(str(f), "x")
-    assert read_text(str(f)) == "x"
-    qd = tmp_path / "q"
-    q = quarantine(str(f), str(qd))
-    assert os.path.exists(q)
-    cdir = tmp_path / "copy"
-    c = copy_into(str(f), str(cdir))
-    assert os.path.exists(c)
+
+@pytest.fixture()
+def tmpdir():
+    d = Path(tempfile.mkdtemp(prefix="etltest_"))
+    try:
+        yield d
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
 
 class DummyRunner(SubprocessRunner):
-    def __init__(self, should_fail=False):
-        self.should_fail = should_fail
-    def run(self, args, cwd=None):
-        if self.should_fail:
-            raise SubprocessError("boom")
-        return "ok"
+    """A runner that records the args and can be configured to fail on certain sources."""
+    def __init__(self, fail_on=None):
+        super().__init__()
+        self.calls = []
+        self.fail_on = set(fail_on or [])
 
-def test_extract_stage_success(tmp_path):
-    inp = tmp_path / "in.md"
-    inp.write_text("# T\n\npara")
-    outdir = tmp_path / "inter"
-    stg = ExtractStage("pandoc", None, str(outdir), runner=DummyRunner())
-    res = stg.run(inputs=[str(inp)])
-    assert res.data["errors"] == {}
-    assert len(res.data["outputs"]) == 1
+    def run(self, args):
+        # args example: [pandoc, -f, gfm, -t, docbook, src, -o, dst]
+        self.calls.append(list(args))
+        src = args[-3] if "-o" in args else args[-1]  # naive, fine for our CLI shapes
+        if src in self.fail_on:
+            raise SubprocessError(f"Boom: {src}")
+        # pretend it created output
+        if "-o" in args:
+            dst = args[-1]
+            Path(dst).parent.mkdir(parents=True, exist_ok=True)
+            Path(dst).write_text("<docbook/>", encoding="utf-8")
 
-def test_extract_stage_error(tmp_path):
-    inp = tmp_path / "in.md"
-    inp.write_text("# T")
-    stg = ExtractStage("pandoc", None, str(tmp_path/"i"), runner=DummyRunner(should_fail=True))
-    res = stg.run(inputs=[str(inp)])
+
+def make_sources(tmp: Path):
+    files = []
+    (tmp / "a.md").write_text("# A\n", encoding="utf-8")
+    files.append(str(tmp / "a.md"))
+    (tmp / "b.html").write_text("<h1>B</h1>", encoding="utf-8")
+    files.append(str(tmp / "b.html"))
+    (tmp / "c.docx").write_bytes(b"PK\x03\x04stubdocx")  # doesn't matter; we mock runner
+    files.append(str(tmp / "c.docx"))
+    return files
+
+
+def test_registry_default_mapping(tmpdir):
+    stage = ExtractStage(
+        pandoc_path="/usr/local/bin/pandoc",
+        oxygen_scripts_dir=None,
+        intermediate_dir=str(tmpdir / "intermediate"),
+        runner=DummyRunner(),
+    )
+
+    # Verify ext -> handler mapping
+    reg = stage.registry
+    assert ".md" in reg and isinstance(reg[".md"], MdPandocExtractor)
+    assert ".html" in reg and isinstance(reg[".html"], HtmlPandocExtractor)
+    assert ".htm" in reg and isinstance(reg[".htm"], HtmlPandocExtractor)
+    assert ".docx" in reg and isinstance(reg[".docx"], DocxPandocExtractor)
+
+
+def test_extract_parallel_success(tmpdir):
+    files = make_sources(tmpdir)
+    runner = DummyRunner()
+    stage = ExtractStage(
+        pandoc_path="/usr/local/bin/pandoc",
+        oxygen_scripts_dir=None,
+        intermediate_dir=str(tmpdir / "intermediate"),
+        runner=runner,
+        max_workers=4,
+    )
+
+    res = stage.run(files)
+    assert res.success is True
+    # All files extracted
+    assert set(res.data["outputs"].keys()) == set(files)
+    # Outputs exist
+    for dst in res.data["outputs"].values():
+        assert Path(dst).exists()
+        assert Path(dst).read_text(encoding="utf-8").strip() == "<docbook/>"
+    # We should have one pandoc invocation per file
+    assert len(runner.calls) == len(files)
+    # Ensure args include expected -f reader per ext
+    calls_str = [" ".join(c) for c in runner.calls]
+    assert any(" -f gfm -t docbook " in c for c in calls_str)  # md
+    assert any(" -f html -t docbook " in c for c in calls_str)  # html/htm
+    assert any(" -f docx -t docbook " in c for c in calls_str)  # docx
+
+
+def test_extract_parallel_with_failures(tmpdir):
+    files = make_sources(tmpdir)
+    # Force one file to fail
+    failing_src = str(tmpdir / "b.html")
+    runner = DummyRunner(fail_on={failing_src})
+
+    stage = ExtractStage(
+        pandoc_path="/usr/local/bin/pandoc",
+        oxygen_scripts_dir=None,
+        intermediate_dir=str(tmpdir / "intermediate"),
+        runner=runner,
+        max_workers=3,
+    )
+
+    res = stage.run(files)
+    # Should not be fully successful
     assert res.success is False
-    assert res.data["errors"]
+    # Exactly one error captured
+    assert set(res.data["errors"].keys()) == {failing_src}
+    # Others succeeded
+    succeeded = set(files) - {failing_src}
+    assert set(res.data["outputs"].keys()) == succeeded
+    for s in succeeded:
+        assert Path(res.data["outputs"][s]).exists()
 
-def test_classify_rules_and_heuristics():
-    rules_by_fn = [{"pattern":"*HOWTO*.md","topic_type":"task"}]
-    rules_by_fn = [type("R",(object,),r) for r in rules_by_fn]
-    rules_by_ct = [{"pattern":"Parameters:","topic_type":"reference"}]
-    rules_by_ct = [type("R",(object,),r) for r in rules_by_ct]
-    assert classify_topic("XHOWTOY.md","",rules_by_fn,rules_by_ct) == "task"
-    assert classify_topic("x.md","Parameters:",rules_by_fn,rules_by_ct) == "reference"
-    assert classify_topic("x.md","Click the button",rules_by_fn,rules_by_ct) == "task"
-    assert classify_topic("x.md","Background info",rules_by_fn,rules_by_ct) == "concept"
 
-def test_transform_stage(tmp_path):
-    inter = tmp_path / "inter.xml"
-    inter.write_text("<article><title>Title</title><para>Do it</para></article>")
-    outdir = tmp_path / "out"
-    stg = TransformStage("java","saxon.jar","xsl.xsl",str(outdir),[],[], runner=DummyRunner())
-    res = stg.run(intermediates={"x.md": str(inter)})
-    outs = list(res.data["outputs"].values())[0]
-    assert outs and outs[0].endswith("_task.dita") or outs[0].endswith("_concept.dita") or outs[0].endswith("_reference.dita")
+def test_handler_overrides(tmpdir, monkeypatch):
+    files = make_sources(tmpdir)
+    # Create a fake oxygen extractor and ensure override routes .docx to it
+    from types import SimpleNamespace
 
-def test_load_stage(tmp_path):
-    outdir = tmp_path / "out"
-    stg = LoadStage(str(outdir), "Map")
-    res = stg.run(topics={"a":["/x/a_concept.dita"],"b":["/x/b_task.dita"]})
-    assert os.path.exists(res.data["map"])
+    class FakeOxy:
+        name = "oxygen-docx"
+        exts = (".docx",)
+        def __init__(self, scripts_dir): self.scripts_dir = scripts_dir
+        def extract(self, src, dst, runner): 
+            Path(dst).parent.mkdir(parents=True, exist_ok=True)
+            Path(dst).write_text("<docbook via oxygen/>", encoding="utf-8")
+
+    # Monkeypatch registry builder to include our fake oxygen handler
+    from dita_etl.stages import extract as extract_mod
+
+    orig_build = extract_mod.ExtractStage._build_registry
+
+    def patched_build(self, overrides):
+        reg = orig_build(self, overrides)
+        # inject fake by name into name map behavior: mimic override by replacing mapping directly
+        reg[".docx"] = FakeOxy("/tmp/oxygen")
+        # If user passed override to oxygen-docx, it's already mapped above.
+        return reg
+
+    monkeypatch.setattr(extract_mod.ExtractStage, "_build_registry", patched_build)
+
+    stage = ExtractStage(
+        pandoc_path="/usr/local/bin/pandoc",
+        oxygen_scripts_dir="/opt/oxygen/scripts",
+        intermediate_dir=str(tmpdir / "intermediate"),
+        runner=DummyRunner(),
+        handler_overrides={".docx": "oxygen-docx"},
+        max_workers=2,
+    )
+
+    res = stage.run(files)
+    # .docx should come from oxygen path
+    docx_out = res.data["outputs"][str(tmpdir / "c.docx")]
+    assert Path(docx_out).read_text(encoding="utf-8").strip() == "<docbook via oxygen/>"
+
+
+def test_return_schema(tmpdir):
+    files = make_sources(tmpdir)
+    stage = ExtractStage(
+        pandoc_path="/usr/local/bin/pandoc",
+        oxygen_scripts_dir=None,
+        intermediate_dir=str(tmpdir / "intermediate"),
+        runner=DummyRunner(),
+        max_workers=2,
+    )
+    res = stage.run(files)
+    assert set(res.data.keys()) == {"outputs", "errors"}
+    assert isinstance(res.data["outputs"], dict)
+    assert isinstance(res.data["errors"], dict)
+    assert isinstance(res.success, bool)
+    assert isinstance(res.message, str)

@@ -50,12 +50,13 @@ def run_assessment(config_path: str, input_dir: str) -> dict:
 
 
 @task
-def run_extract(cfg: Config, inputs: List[str]) -> Dict[str, str]:
+def run_extract(cfg: Config, inputs: list[str]) -> dict[str, str]:
     stg = ExtractStage(
         cfg.tooling.pandoc_path,
         cfg.tooling.oxygen_scripts_dir,
         intermediate_dir="build/intermediate",
         runner=SubprocessRunner(),
+        handler_overrides=getattr(cfg, "extract", {}).get("handler_overrides", {})
     )
     res = stg.run(inputs=inputs)
     return res.data["outputs"]

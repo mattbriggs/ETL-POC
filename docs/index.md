@@ -18,7 +18,7 @@ About the ETL pipeline, how to run it, and how to interpret results.
 - [A Modular, Tool-Agnostic ETL Process for Content Conversion to DITA XML](white-papers/content_to_dita_etl_whitepaper.pdf)
 - [ETL Pipeline for Converting Multiple Formats to DITA 1.3](white-papers/etl-pipeline-overview.md)
 - [ETL Pipeline User Manual: Converting Unstructured Content to DITA](white-papers/etl-user-manual.md)
-- [Framework for Evaluating ETL Processes (with DITA Conversion Context)xt](white-papers/etl-framework-for-evaluating-etl-processes)
+- [Framework for Evaluating ETL Processes (with DITA Conversion Context)xt](white-papers/etl-framework-for-evaluating-etl-processes.md)
 
 ## Related tools and libraries
 

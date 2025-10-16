@@ -1,26 +1,28 @@
+tooling:
+  pandoc_path: /usr/local/bin/pandoc
+  oxygen_scripts_dir: /Applications/oxygen/scripts
+  java_path: /usr/bin/java
+  saxon_jar: /opt/saxon/saxon9he.jar
 
 source_formats:
-  treat_as_markdown: [".md"]
-classification_rules:
-  by_filename:
-    - pattern: "*HOWTO*.md"
-      topic_type: "task"
-  by_content:
-    - pattern: "Parameters:"
-      topic_type: "reference"
-chunking:
-  level: 1
-  nested_topics: true
-dita_output:
-  dita_version: "1.3"
-  use_specialization: false
-  output_folder: "build/out"
-  map_title: "Documentation Set"
-tooling:
-  pandoc_path: "pandoc"      # ensure pandoc is installed or mock in tests
-  oxygen_scripts_dir: null   # optional: '/Applications/Oxygen XML Editor/tools/scripts'
-  saxon_jar: "saxon-he.jar"  # path to Saxon jar if used
-  java_path: "java"
+  treat_as_html:
+    - ".html"
+    - ".htm"
+
 extract:
   handler_overrides:
-    ".docx": "oxygen-docx"   # switch docx to Oxygen without code changes
+    ".html": "pandoc-html"
+
+dita_output:
+  output_folder: build/job02/
+  map_title: "ApplePages - HTML to DITA"
+
+classification_rules:
+  by_filename:
+    - match: "index"
+      type: "concept"
+    - match: "guide"
+      type: "task"
+  by_content:
+    - match: "procedure"
+      type: "task"

@@ -1,5 +1,6 @@
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-#!/usr/bin/env python3
 import argparse
 from dita_etl import build_flow
 

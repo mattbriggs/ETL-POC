@@ -1,5 +1,6 @@
 from __future__ import annotations
-import os, glob
+import os
+import glob
 from typing import List, Dict
 from prefect import flow, task, get_run_logger
 
@@ -17,83 +18,108 @@ from .assess.inventory import assess_batch as assess_run
 @task
 def list_inputs(input_dir: str, exts: List[str]) -> List[str]:
     """
-    Discover files recursively that match any of the configured extensions.
+    Discover all files recursively that match any of the configured extensions.
     """
     files: List[str] = []
-    patts = [f"**/*{ext}" for ext in exts]
-    for patt in patts:
-        files.extend(glob.glob(os.path.join(input_dir, patt), recursive=True))
-    # Only files, stable order
+    patterns = [f"**/*{ext}" for ext in exts]
+    for pattern in patterns:
+        files.extend(glob.glob(os.path.join(input_dir, pattern), recursive=True))
+
     files = sorted([p for p in files if os.path.isfile(p)])
     return files
 
 
 @task
-def run_assessment(config_path: str, input_dir: str) -> dict:
+def run_assessment(config_path: str, input_dir: str, output_root: str) -> dict:
     """
-    Stage 0: Inventory & Assessment -- emits build/assess/{inventory.json, report.html, ...}
+    Stage 0: Inventory & Assessment — emits assess/{inventory.json, report.html, ...}
     """
     logger = get_run_logger()
     acfg = AssessConfig.load(config_path)
 
-    # Recurse for anything under input_dir
-    files = [p for p in glob.glob(os.path.join(input_dir, "**/*"), recursive=True) if os.path.isfile(p)]
+    files = [
+        p for p in glob.glob(os.path.join(input_dir, "**/*"), recursive=True)
+        if os.path.isfile(p)
+    ]
 
-    # Absolute output dir avoids CWD surprises
-    out_dir = os.path.abspath(os.path.join(os.getcwd(), "build", "assess"))
-    os.makedirs(out_dir, exist_ok=True)
+    assess_dir = os.path.join(output_root, "assess")
+    os.makedirs(assess_dir, exist_ok=True)
 
-    results = assess_run(files, acfg, out_dir=out_dir)
-    logger.info(f"Assessment artifacts written: {results}")
-    # Typical: results['report'] == {abs}/build/assess/report.html
+    results = assess_run(files, acfg, out_dir=assess_dir)
+    logger.info(f"Assessment artifacts written to: {assess_dir}")
     return results
 
 
 @task
 def run_extract(cfg: Config, inputs: list[str]) -> dict[str, str]:
-    stg = ExtractStage(
+    """
+    Stage 1: Extract — converts source files into canonical intermediate XML (DocBook/HTML5).
+    """
+    intermediate_dir = os.path.join(cfg.dita_output.output_folder, "intermediate")
+    os.makedirs(intermediate_dir, exist_ok=True)
+
+    stage = ExtractStage(
         cfg.tooling.pandoc_path,
         cfg.tooling.oxygen_scripts_dir,
-        intermediate_dir="build/intermediate",
+        intermediate_dir=intermediate_dir,
         runner=SubprocessRunner(),
-        handler_overrides=getattr(cfg, "extract", {}).get("handler_overrides", {})
     )
-    res = stg.run(inputs=inputs)
-    return res.data["outputs"]
+    result = stage.run(inputs=inputs)
+    return result.data["outputs"]
 
 
 @task
 def run_transform(cfg: Config, intermediates: Dict[str, str]) -> Dict[str, List[str]]:
-    # tolerate either cfg.tooling.saxon_jar or legacy cfg.tooling.saxonn_jar
-    saxon_jar = getattr(cfg.tooling, "saxon_jar", None) or getattr(cfg.tooling, "saxonn_jar", None)
+    """
+    Stage 2: Transform — converts intermediate XML into DITA topics.
+    """
+    saxon_jar = getattr(cfg.tooling, "saxon_jar", None) or getattr(
+        cfg.tooling, "saxonn_jar", None
+    )
 
-    stg = TransformStage(
+    transform_dir = os.path.join(cfg.dita_output.output_folder, "dita", "topics")
+    os.makedirs(transform_dir, exist_ok=True)
+
+    stage = TransformStage(
         cfg.tooling.java_path,
         saxon_jar,
         xsl_path="xsl/docbook2dita.xsl",
-        output_dir=cfg.dita_output.output_folder,
+        output_dir=transform_dir,
         rules_by_filename=cfg.classification_rules.get("by_filename", []),
         rules_by_content=cfg.classification_rules.get("by_content", []),
     )
-    res = stg.run(intermediates=intermediates)
-    return res.data["outputs"]
+    result = stage.run(intermediates=intermediates)
+    return result.data["outputs"]
 
 
 @task
 def run_load(cfg: Config, topics: Dict[str, List[str]]) -> str:
-    stg = LoadStage(output_dir=cfg.dita_output.output_folder, map_title=cfg.dita_output.map_title)
-    res = stg.run(topics=topics)
-    return res.data["map"]
+    """
+    Stage 3: Load — assembles DITA topics into a map and ensures assets are copied.
+    """
+    load_dir = os.path.join(cfg.dita_output.output_folder, "dita")
+    os.makedirs(load_dir, exist_ok=True)
+
+    stage = LoadStage(output_dir=load_dir, map_title=cfg.dita_output.map_title)
+    result = stage.run(topics=topics)
+    return result.data["map"]
 
 
 @flow(name="DITA ETL Pipeline")
-def build_flow(config_path: str = "config/config.yaml", input_dir: str = "sample_data/input"):
+def build_flow(
+    config_path: str = "config/config.yaml",
+    input_dir: str = "sample_data/input",
+) -> str:
+    """
+    Orchestrates all ETL stages (Assess → Extract → Transform → Load).
+    """
     cfg = Config.load(config_path)
+    output_root = cfg.dita_output.output_folder
 
-    # ---- Stage 0: Assessment (runs before anything else) ----
-    _ = run_assessment(config_path="config/assess.yaml", input_dir=input_dir)
+    # ---- Stage 0: Assessment ----
+    _ = run_assessment(config_path="config/assess.yaml", input_dir=input_dir, output_root=output_root)
 
-    # Determine extensions from config or default
+    # Determine extensions from config or defaults
     exts: List[str] = []
     for key, vals in getattr(cfg, "source_formats", {}).items():
         if key.startswith("treat_as_"):
@@ -103,8 +129,14 @@ def build_flow(config_path: str = "config/config.yaml", input_dir: str = "sample
     if not exts:
         exts = [".md", ".docx", ".html"]
 
+    # ---- Stage 1: Extract ----
     inputs = list_inputs(input_dir, exts)
-    interm = run_extract(cfg, inputs)
-    topics = run_transform(cfg, interm)
+    intermediates = run_extract(cfg, inputs)
+
+    # ---- Stage 2: Transform ----
+    topics = run_transform(cfg, intermediates)
+
+    # ---- Stage 3: Load ----
     map_path = run_load(cfg, topics)
+
     return map_path

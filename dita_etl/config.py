@@ -5,9 +5,14 @@ from typing import List, Dict, Optional
 import yaml, os
 
 @dataclass
+@dataclass
 class ClassificationRule:
     pattern: str
-    topic_type: str  # 'concept'|'task'|'reference'
+    type: str
+
+    def __init__(self, match: str | None = None, pattern: str | None = None, type: str = ""):
+        self.pattern = pattern or match or ""
+        self.type = type
 
 @dataclass
 class Chunking:

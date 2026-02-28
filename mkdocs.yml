@@ -1,0 +1,58 @@
+site_name: DITA ETL Pipeline
+site_description: Composable pipeline for converting source documents to DITA XML
+site_author: Heretto
+repo_url: https://github.com/your-org/ETL-POC
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - content.code.annotate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: sphinx
+            show_source: true
+            show_root_heading: true
+            members_order: source
+
+nav:
+  - Home: index.md
+  - Architecture: pipeline.md
+  - Stages: stages.md
+  - Configuration: configuration.md
+  - API Reference:
+      - Contracts: api/contracts.md
+      - Config: api/config.md
+      - Pipeline: api/pipeline.md
+      - Transforms: api/transforms.md
+      - Assess: api/assess.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - toc:
+      permalink: true

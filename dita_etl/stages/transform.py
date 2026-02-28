@@ -1,63 +1,64 @@
+"""Stage 2 — Transform.
+
+Converts intermediate DocBook XML files into typed DITA topic files.
+Classification and XML building are delegated to pure functions in
+``dita_etl.transforms``.
+"""
 
 from __future__ import annotations
-import os, pathlib, re
-from typing import Dict, List
-from .base import Stage, StageResult
-from ..runners import SubprocessRunner, SubprocessError
-from ..io_utils import ensure_dir, write_text, read_text
-from ..classify import classify_topic
 
-DITA_TEMPLATE = {
-    "concept": lambda title, body: f'<concept id="c1"><title>{title}</title><conbody>{body}</conbody></concept>',
-    "task": lambda title, body: f'<task id="t1"><title>{title}</title><taskbody>{body}</taskbody></task>',
-    "reference": lambda title, body: f'<reference id="r1"><title>{title}</title><refbody>{body}</refbody></reference>',
-}
+import os
+import pathlib
 
-class TransformStage(Stage):
-    def __init__(self, java_path: str, saxon_jar: str, xsl_path: str, output_dir: str, rules_by_filename, rules_by_content, runner: SubprocessRunner | None = None):
-        self.java_path = java_path
-        self.saxon_jar = saxon_jar
-        self.xsl_path = xsl_path
-        self.output_dir = output_dir
-        self.rules_by_filename = rules_by_filename
-        self.rules_by_content = rules_by_content
-        self.runner = runner or SubprocessRunner()
+from dita_etl.contracts import TransformInput, TransformOutput
+from dita_etl.io.filesystem import ensure_dir, read_text, write_text
+from dita_etl.transforms.classify import classify_topic
+from dita_etl.transforms.dita import build_topic, extract_body, extract_title
 
-    def _apply_xslt(self, src_xml: str) -> str:
-        # In real use, call Saxon. For scaffold, we simply return the source content.
-        # Command (documented): java -jar saxon.jar -s:src.xml -xsl:stylesheet.xsl -o:-
-        # We keep it simple to ease unit testing.
-        return read_text(src_xml)
 
-    def _title_from_content(self, text: str) -> str:
-        # naive title: first line without tags
-        m = re.search(r"<title>(.*?)</title>", text, re.IGNORECASE)
-        return m.group(1) if m else "Untitled"
+class TransformStage:
+    """Stage 2: convert intermediate DocBook XML to DITA topic files.
 
-    def _body_from_content(self, text: str) -> str:
-        # naive body extraction: everything inside <para> becomes <p/>
-        paras = re.findall(r"<para>(.*?)</para>", text, re.IGNORECASE | re.DOTALL)
-        if not paras:
-            # fallback to whole
-            return f"<p>{re.sub('<[^>]+>', '', text)[:200]}</p>"
-        return "".join(f"<p>{p.strip()}</p>" for p in paras)
+    Each intermediate XML is classified into a DITA topic type (concept,
+    task, or reference) and a minimal valid DITA topic is rendered.
 
-    def run(self, intermediates: Dict[str, str]) -> StageResult:
-        ensure_dir(self.output_dir)
-        outputs: Dict[str, List[str]] = {}
-        errors: Dict[str, str] = {}
-        for src, xml in intermediates.items():
+    .. note::
+        Full XSLT transformation via Saxon is documented in the command below
+        but is currently scaffolded as a pass-through to ease unit testing.
+        Replace :meth:`_apply_xslt` with a real Saxon call when ready::
+
+            java -jar saxon.jar -s:src.xml -xsl:stylesheet.xsl -o:out.dita
+    """
+
+    def run(self, input_: TransformInput) -> TransformOutput:
+        """Execute the transformation stage.
+
+        :param input_: Validated :class:`~dita_etl.contracts.TransformInput`
+            contract.
+        :returns: :class:`~dita_etl.contracts.TransformOutput` contract
+            containing paths to generated DITA topics and any errors.
+        """
+        ensure_dir(input_.output_dir)
+        topics: dict[str, list[str]] = {}
+        errors: dict[str, str] = {}
+
+        for src, xml_path in input_.intermediates.items():
             try:
-                txt = self._apply_xslt(xml)
-                title = self._title_from_content(txt)
-                body = self._body_from_content(txt)
-                topic_type = classify_topic(os.path.basename(src), txt, self.rules_by_filename, self.rules_by_content)
-                root = DITA_TEMPLATE[topic_type](title, body)
+                docbook_text = read_text(xml_path)
+                title = extract_title(docbook_text)
+                body = extract_body(docbook_text)
+                topic_type = classify_topic(
+                    os.path.basename(src),
+                    docbook_text,
+                    list(input_.rules_by_filename),
+                    list(input_.rules_by_content),
+                )
+                dita_xml = build_topic(title, body, topic_type)
                 out_name = pathlib.Path(src).stem + f"_{topic_type}.dita"
-                out_path = os.path.join(self.output_dir, out_name)
-                write_text(out_path, root)
-                outputs.setdefault(src, []).append(out_path)
-            except Exception as e:
-                errors[src] = str(e)
-        msg = f"Transformed {len(outputs)} intermediates into DITA topics."
-        return StageResult(success=len(errors)==0, message=msg, data={"outputs": outputs, "errors": errors})
+                out_path = os.path.join(input_.output_dir, out_name)
+                write_text(out_path, dita_xml)
+                topics.setdefault(src, []).append(out_path)
+            except Exception as exc:  # noqa: BLE001
+                errors[src] = str(exc)
+
+        return TransformOutput(topics=topics, errors=errors)

@@ -1,166 +1,110 @@
+"""Stage 1 — Extract.
+
+Routes each source file to its registered format extractor and produces
+intermediate DocBook XML files. Uses a thread pool for parallel I/O-bound
+subprocess calls.
+"""
+
 from __future__ import annotations
 
 import os
 import pathlib
-import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List
 
-from .base import Stage, StageResult
-from ..runners import SubprocessRunner, SubprocessError
-from ..io_utils import ensure_dir
-
-from .extractors.base import FileExtractor
-from .extractors.md_pandoc import MdPandocExtractor
-from .extractors.html_pandoc import HtmlPandocExtractor
-from .extractors.docx_pandoc import DocxPandocExtractor
-from .extractors.docx_oxygen import DocxOxygenExtractor
+from dita_etl.contracts import ExtractInput, ExtractOutput
+from dita_etl.extractors.base import FileExtractor
+from dita_etl.extractors.registry import build_registry
+from dita_etl.io.filesystem import copy_assets, ensure_dir
+from dita_etl.io.subprocess_runner import RunnerError, SubprocessRunner
 
 
-class ExtractStage(Stage):
-    """
-    ExtractStage:
-    Routes files to format-specific extractors and produces intermediate XML (DocBook).
-    - Supports Markdown, HTML, and DOCX formats.
-    - Preserves folder structure for assets (styles/images).
-    - Threaded per-file execution for I/O-bound extractors.
+class ExtractStage:
+    """Stage 1: convert source documents to intermediate DocBook XML.
+
+    Supports Markdown, HTML, and DOCX via Pandoc by default. Additional
+    or overridden extractors can be injected via ``handler_overrides``.
+
+    :param pandoc_path: Path or command name for the Pandoc binary.
+    :param oxygen_scripts_dir: Optional path to Oxygen XML scripts directory.
     """
 
     def __init__(
         self,
         pandoc_path: str,
-        oxygen_scripts_dir: str | None,
-        intermediate_dir: str,
-        runner: SubprocessRunner | None = None,
-        handler_overrides: Dict[str, str] | None = None,
-        max_workers: int | None = None,
-    ):
-        self.pandoc_path = pandoc_path
-        self.oxygen_scripts_dir = oxygen_scripts_dir
-        self.intermediate_dir = intermediate_dir
-        self.runner = runner or SubprocessRunner()
-        self.registry = self._build_registry(handler_overrides or {})
+        oxygen_scripts_dir: str | None = None,
+    ) -> None:
+        self._pandoc_path = pandoc_path
+        self._oxygen_scripts_dir = oxygen_scripts_dir
 
-        # Default parallelism for subprocess I/O
-        self.max_workers = max_workers or max(2, min(8, (os.cpu_count() or 4)))
+    def run(self, input_: ExtractInput) -> ExtractOutput:
+        """Execute the extraction stage.
 
-    def _build_registry(self, overrides: Dict[str, str]) -> Dict[str, FileExtractor]:
+        :param input_: Validated :class:`~dita_etl.contracts.ExtractInput`
+            contract.
+        :returns: :class:`~dita_etl.contracts.ExtractOutput` contract
+            containing paths to intermediate XML files and any errors.
         """
-        Create a registry mapping file extensions to extractor instances.
-        Allows optional overrides from configuration.
-        """
-        handlers: List[FileExtractor] = [
-            MdPandocExtractor(self.pandoc_path),     # .md → DocBook
-            HtmlPandocExtractor(self.pandoc_path),   # .html/.htm → DocBook
-            DocxPandocExtractor(self.pandoc_path),   # .docx → DocBook
-        ]
+        registry = build_registry(
+            pandoc_path=self._pandoc_path,
+            handler_overrides=input_.handler_overrides or {},
+            oxygen_scripts_dir=self._oxygen_scripts_dir,
+        )
+        runner = SubprocessRunner()
+        ensure_dir(input_.intermediate_dir)
+        ensure_dir(os.path.join(input_.intermediate_dir, "styles"))
+        ensure_dir(os.path.join(input_.intermediate_dir, "images"))
 
-        registry: Dict[str, FileExtractor] = {}
-        name_map = {h.name: h for h in handlers}
+        # Copy assets from the common source root
+        if input_.source_paths:
+            src_root = str(pathlib.Path(input_.source_paths[0]).parent)
+            copy_assets(src_root, input_.intermediate_dir)
 
-        for handler in handlers:
-            for ext in getattr(handler, "exts", ()):
-                registry[ext.lower()] = handler
+        max_workers = input_.max_workers or max(2, min(8, os.cpu_count() or 4))
 
-        # Optional: Enable Oxygen DOCX handler
-        # if self.oxygen_scripts_dir:
-        #     oxy = DocxOxygenExtractor(self.oxygen_scripts_dir)
-        #     name_map[oxy.name] = oxy
+        outputs: dict[str, str] = {}
+        errors: dict[str, str] = {}
 
-        # Apply any overrides from config
-        for ext, name in overrides.items():
-            if name in name_map:
-                registry[ext.lower()] = name_map[name]
-
-        return registry
-
-    def _extract_one(self, src: str) -> tuple[str, str]:
-        """
-        Extract a single file to intermediate XML using its registered handler.
-        """
-        ext = pathlib.Path(src).suffix.lower()
-        base_name = pathlib.Path(src).stem + ".xml"
-        dst = os.path.join(self.intermediate_dir, base_name)
-
-        handler = self.registry.get(ext)
-        if not handler:
-            raise SubprocessError(f"No extractor registered for extension: {ext}")
-
-        handler.extract(src, dst, self.runner)
-        return src, dst
-
-
-    def _copy_assets(self, src_root: str):
-        """
-        Copy asset directories or flat-file assets from src_root into the intermediate_dir.
-        Supports local, network, and cloud-synced (OneDrive/iCloud) folders safely.
-        """
-        import shutil
-        from ..io_utils import ensure_dir
-
-        asset_folders = ("styles", "images", "imagers")
-
-        for folder in asset_folders:
-            src_path = os.path.join(src_root, folder)
-            dst_path = os.path.join(self.intermediate_dir, folder)
-
-            if not os.path.exists(src_path):
-                continue
-
-            ensure_dir(dst_path)
-
-            # Iterate contents to handle both files and subdirectories
-            for item in os.listdir(src_path):
-                src_item = os.path.join(src_path, item)
-                dst_item = os.path.join(dst_path, item)
-
-                # Copy files directly
-                if os.path.isfile(src_item):
-                    try:
-                        shutil.copy2(src_item, dst_item)
-                    except Exception as e:
-                        print(f"⚠️ Skipped file {src_item}: {e}")
-
-                # Recursively copy subfolders
-                elif os.path.isdir(src_item):
-                    try:
-                        shutil.copytree(src_item, dst_item, dirs_exist_ok=True)
-                    except Exception as e:
-                        print(f"⚠️ Skipped folder {src_item}: {e}")
-
-
-    def run(self, inputs: List[str]) -> StageResult:
-        """
-        Run extraction for all source files.
-        Produces intermediate XMLs and copies static assets.
-        """
-        ensure_dir(self.intermediate_dir)
-        ensure_dir(os.path.join(self.intermediate_dir, "styles"))
-        ensure_dir(os.path.join(self.intermediate_dir, "images"))
-
-        # Infer root of inputs for asset copying
-        if inputs:
-            common_root = str(pathlib.Path(inputs[0]).parents[0])
-            self._copy_assets(common_root)
-
-        outputs: Dict[str, str] = {}
-        errors: Dict[str, str] = {}
-
-        with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
-            futures = {pool.submit(self._extract_one, src): src for src in inputs}
-            for fut in as_completed(futures):
-                src = futures[fut]
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = {
+                pool.submit(
+                    self._extract_one,
+                    src,
+                    input_.intermediate_dir,
+                    registry,
+                    runner,
+                ): src
+                for src in input_.source_paths
+            }
+            for future in as_completed(futures):
+                src = futures[future]
                 try:
-                    src_file, dst_file = fut.result()
-                    outputs[src_file] = dst_file
-                except Exception as exc:
+                    src_out, dst_out = future.result()
+                    outputs[src_out] = dst_out
+                except Exception as exc:  # noqa: BLE001
                     errors[src] = str(exc)
 
-        success = len(errors) == 0
-        message = f"Extracted {len(outputs)} / {len(inputs)} files to intermediate."
+        return ExtractOutput(outputs=outputs, errors=errors)
 
-        return StageResult(
-            success=success,
-            message=message,
-            data={"outputs": outputs, "errors": errors},
-        )
+    @staticmethod
+    def _extract_one(
+        src: str,
+        intermediate_dir: str,
+        registry: dict[str, FileExtractor],
+        runner: SubprocessRunner,
+    ) -> tuple[str, str]:
+        """Extract a single source file to intermediate XML.
+
+        :param src: Source file path.
+        :param intermediate_dir: Directory for the output XML.
+        :param registry: Extension → extractor mapping.
+        :param runner: Subprocess runner.
+        :returns: ``(src_path, dst_path)`` tuple.
+        :raises RunnerError: If the extractor subprocess fails.
+        """
+        ext = pathlib.Path(src).suffix.lower()
+        handler = registry.get(ext)
+        if handler is None:
+            raise RunnerError(f"No extractor registered for extension: {ext!r}")
+        dst = os.path.join(intermediate_dir, pathlib.Path(src).stem + ".xml")
+        handler.extract(src, dst, runner)
+        return src, dst

@@ -150,6 +150,54 @@ class TestExtractConfig:
         assert cfg.extract.max_workers is None
 
 
+class TestDocstringExample:
+    def test_load_verbatim_module_docstring_yaml(self, tmp_path):
+        # Verbatim YAML from the config.py module docstring.
+        path = _write_yaml(
+            tmp_path,
+            """\
+            tooling:
+              pandoc_path: /usr/local/bin/pandoc
+              java_path: /usr/bin/java
+              saxon_jar: /opt/saxon/saxon9he.jar
+
+            source_formats:
+              treat_as_html: [".html", ".htm"]
+
+            extract:
+              max_workers: 4
+              handler_overrides:
+                ".docx": "oxygen-docx"
+
+            dita_output:
+              output_folder: build/out
+              map_title: "My Documentation Set"
+
+            classification_rules:
+              by_filename:
+                - match: "index"
+                  type: "concept"
+              by_content:
+                - match: "procedure"
+                  type: "task"
+            """,
+        )
+        cfg = Config.load(path)
+        assert cfg.tooling.pandoc_path == "/usr/local/bin/pandoc"
+        assert cfg.tooling.java_path == "/usr/bin/java"
+        assert cfg.tooling.saxon_jar == "/opt/saxon/saxon9he.jar"
+        assert cfg.extract.max_workers == 4
+        assert cfg.extract.handler_overrides == {".docx": "oxygen-docx"}
+        assert cfg.dita_output.output_folder == "build/out"
+        assert cfg.dita_output.map_title == "My Documentation Set"
+        fn_rules = cfg.classification_rules["by_filename"]
+        ct_rules = cfg.classification_rules["by_content"]
+        assert len(fn_rules) == 1 and fn_rules[0].pattern == "index"
+        assert fn_rules[0].topic_type == "concept"
+        assert len(ct_rules) == 1 and ct_rules[0].pattern == "procedure"
+        assert ct_rules[0].topic_type == "task"
+
+
 class TestStrictLoading:
     def test_unknown_top_level_key_raises(self, tmp_path):
         path = _write_yaml(tmp_path, "typo_key: value\n")

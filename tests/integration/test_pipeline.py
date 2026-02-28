@@ -7,6 +7,7 @@ end-to-end data flow and artefact production.
 
 from __future__ import annotations
 
+import json
 import textwrap
 from pathlib import Path
 
@@ -183,3 +184,52 @@ class TestTransformLoadIntegration:
         assert load_output.topic_count == 4
         map_text = Path(load_output.map_path).read_text(encoding="utf-8")
         assert map_text.count("<topicref") == 4
+
+
+# ---------------------------------------------------------------------------
+# Assess plan → Transform wiring (end-to-end)
+# ---------------------------------------------------------------------------
+
+
+class TestAssessPlanDrivesTransform:
+    def test_assess_plan_drives_transform(self, tmp_path, assess_config):
+        # 1. Write source .md file with task-heuristic content
+        src = tmp_path / "click.md"
+        src.write_text("# Install\n\nClick the Install button.\n", encoding="utf-8")
+
+        # 2. Run AssessStage → produces plan file
+        assess_out_dir = str(tmp_path / "assess")
+        assess_input = AssessInput(
+            source_paths=(str(src),),
+            output_dir=assess_out_dir,
+            config_path=str(assess_config),
+        )
+        assess_output = AssessStage(config_path=str(assess_config)).run(assess_input)
+        assert Path(assess_output.plans_dir).is_dir()
+
+        # 3. Overwrite plan's default_topic_type to "reference" (deterministic)
+        plan_file = Path(assess_output.plans_dir) / "click.md.conversion_plan.json"
+        plan_data = json.loads(plan_file.read_text(encoding="utf-8"))
+        plan_data["default_topic_type"] = "reference"
+        plan_file.write_text(json.dumps(plan_data), encoding="utf-8")
+
+        # 4. Write stub intermediate XML (bypasses the Extract stage)
+        xml_path = tmp_path / "intermediate" / "click.xml"
+        xml_path.parent.mkdir(parents=True, exist_ok=True)
+        xml_path.write_text(
+            "<title>Install</title><para>Click the Install button.</para>",
+            encoding="utf-8",
+        )
+
+        # 5. Run TransformStage with plans_dir wired in
+        transform_input = TransformInput(
+            intermediates={str(src): str(xml_path)},
+            output_dir=str(tmp_path / "dita"),
+            plans_dir=assess_output.plans_dir,
+        )
+        transform_output = TransformStage().run(transform_input)
+
+        # 6. Plan's "reference" beats the task heuristic
+        assert transform_output.success
+        topic_path = transform_output.topics[str(src)][0]
+        assert "_reference.dita" in topic_path

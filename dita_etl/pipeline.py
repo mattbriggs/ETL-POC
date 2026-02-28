@@ -117,6 +117,7 @@ def run_pipeline(
         output_dir=topics_dir,
         rules_by_filename=tuple(cfg.classification_rules.get("by_filename", [])),
         rules_by_content=tuple(cfg.classification_rules.get("by_content", [])),
+        plans_dir=assess_output.plans_dir,
     )
     transform_output = transform_stage.run(transform_input)
     _LOG.info(

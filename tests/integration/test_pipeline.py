@@ -233,3 +233,63 @@ class TestAssessPlanDrivesTransform:
         assert transform_output.success
         topic_path = transform_output.topics[str(src)][0]
         assert "_reference.dita" in topic_path
+
+
+# ---------------------------------------------------------------------------
+# run_pipeline() end-to-end (Extract stage stubbed — no pandoc needed)
+# ---------------------------------------------------------------------------
+
+
+class TestRunPipelineIntegration:
+    def test_full_pipeline_with_stubbed_extract(self, tmp_path, monkeypatch, assess_config):
+        from dita_etl.contracts import ExtractOutput
+        from dita_etl.pipeline import run_pipeline
+
+        # Real input — Assess runs for real; Extract is stubbed
+        input_dir = tmp_path / "input"
+        input_dir.mkdir()
+        src = input_dir / "guide.md"
+        src.write_text("# Guide\n\nOverview of the system.\n", encoding="utf-8")
+
+        # Pre-written stub XML (what pandoc would produce)
+        xml_file = tmp_path / "guide.xml"
+        xml_file.write_text(
+            "<title>Guide</title><para>Overview of the system.</para>", encoding="utf-8"
+        )
+
+        # Minimal config files
+        config_path = tmp_path / "config.yaml"
+        config_path.write_text(
+            f"dita_output:\n  output_folder: {tmp_path / 'out'}\n  map_title: Test Map\n",
+            encoding="utf-8",
+        )
+
+        # Stub ExtractStage.run — return canned output with our pre-written XML
+        monkeypatch.setattr(
+            "dita_etl.stages.extract.ExtractStage.run",
+            lambda self, input_: ExtractOutput(
+                outputs={str(src): str(xml_file)}, errors={}
+            ),
+        )
+
+        result = run_pipeline(
+            config_path=str(config_path),
+            assess_config_path=str(assess_config),
+            input_dir=str(input_dir),
+        )
+
+        assert result.extract.success
+        assert result.transform.success
+        assert result.load.topic_count >= 1
+        assert Path(result.map_path).exists()
+        assert "Test Map" in Path(result.map_path).read_text(encoding="utf-8")
+
+    def test_missing_config_raises_file_not_found(self, tmp_path):
+        from dita_etl.pipeline import run_pipeline
+
+        with pytest.raises(FileNotFoundError):
+            run_pipeline(
+                config_path=str(tmp_path / "nonexistent.yaml"),
+                assess_config_path=str(tmp_path / "assess.yaml"),
+                input_dir=str(tmp_path),
+            )

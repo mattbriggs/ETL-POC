@@ -139,7 +139,7 @@ ETL-POC/
 │   │   ├── predict.py          # Topic-type prediction
 │   │   ├── report.py           # HTML report rendering
 │   │   ├── scoring.py          # Readiness + risk scoring
-│   │   └── structure.py        # Markdown sectionization
+│   │   └── structure.py        # Markdown + HTML sectionization
 │   │
 │   ├── extractors/             # Strategy: format → DocBook converters
 │   │   ├── base.py             # FileExtractor protocol
@@ -195,6 +195,11 @@ dita_output:
   output_folder: build/out
   map_title: "My Documentation Set"
 
+extract:
+  max_workers: 4              # parallel extraction threads (null = auto)
+  handler_overrides:
+    ".docx": "oxygen-docx"   # optional: use Oxygen instead of Pandoc
+
 classification_rules:
   by_filename:
     - match: "guide"
@@ -205,6 +210,9 @@ classification_rules:
     - match: "procedure"
       type: "task"
 ```
+
+Classification uses five sources in priority order: filename rules → content
+rules → Assess-stage plan hint → built-in heuristics → default `concept`.
 
 ### `config/assess.yaml`
 
@@ -260,7 +268,10 @@ pytest tests/integration/        # integration tests only
 pytest --cov-report=html         # open htmlcov/index.html
 ```
 
-Coverage threshold: **90%** (enforced by pytest-cov, currently ~93%).
+Coverage threshold: **90%** (enforced by pytest-cov, currently ~97%).
+
+CI runs the same command on every push and pull request to `main` — see
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ---
 
@@ -270,7 +281,7 @@ Coverage threshold: **90%** (enforced by pytest-cov, currently ~93%).
 
 1. Create `dita_etl/extractors/my_format.py` implementing the `FileExtractor` protocol.
 2. Register it in `dita_etl/extractors/registry.py` (`default_handlers` or `name_map`).
-3. Add unit tests in `tests/unit/test_extractors.py`.
+3. Add unit tests in `tests/unit/test_extract_stage.py`.
 
 ### Adding a new stage
 

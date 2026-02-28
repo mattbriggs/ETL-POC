@@ -6,5 +6,6 @@
         - ClassificationRule
         - Chunking
         - DITAOutput
+        - ExtractConfig
         - Tooling
         - Config

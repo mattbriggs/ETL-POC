@@ -1,101 +1,61 @@
+"""Stage 3 — Load.
+
+Assembles DITA topics into a DITA map and copies associated assets.
+Map generation is delegated to the pure ``dita_etl.transforms.dita`` module.
+"""
+
 from __future__ import annotations
 
 import os
 import pathlib
-import shutil
-from typing import Dict, List
 
-from .base import Stage, StageResult
-from ..io_utils import ensure_dir, write_text
-
-
-MAP_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "map.dtd">
-<map>
-  <title>{title}</title>
-  {refs}
-</map>
-"""
+from dita_etl.contracts import LoadInput, LoadOutput
+from dita_etl.io.filesystem import copy_assets, ensure_dir, write_text
+from dita_etl.transforms.dita import build_map
 
 
-def make_topicref(path: str, base_dir: str) -> str:
-    """
-    Generate a <topicref> element with a path relative to the map file.
-    """
-    abs_path = pathlib.Path(path).resolve()
-    rel_path = abs_path.relative_to(pathlib.Path(base_dir).resolve())
-    return f'  <topicref href="{rel_path.as_posix()}" />'
+class LoadStage:
+    """Stage 3: assemble DITA topics into a map and collocate assets.
 
+    Expected output structure::
 
-class LoadStage(Stage):
-    """
-    Assembles transformed DITA topics into a single DITA map and
-    collocates associated assets (CSS, images).
-
-    Expected structure:
         output_dir/
-          ├── topics/
-          │   ├── topic1.dita
-          │   └── ...
-          ├── assets/
-          │   ├── styles/
-          │   └── images/
-          └── index.ditamap
+        ├── topics/
+        │   ├── guide_task.dita
+        │   └── ref_reference.dita
+        ├── assets/
+        │   ├── styles/
+        │   └── images/
+        └── index.ditamap
     """
 
-    def __init__(self, output_dir: str, map_title: str):
-        self.output_dir = output_dir
-        self.map_title = map_title
+    def run(self, input_: LoadInput) -> LoadOutput:
+        """Execute the load stage.
 
-    def _copy_assets(self, intermediate_root: str):
+        :param input_: Validated :class:`~dita_etl.contracts.LoadInput`
+            contract.
+        :returns: :class:`~dita_etl.contracts.LoadOutput` contract with
+            the path to the written DITA map.
         """
-        Copy assets (images, styles, imagers) from the intermediate directory
-        into the final DITA output folder under 'assets/'.
-        """
-        asset_root = os.path.join(self.output_dir, "assets")
-        ensure_dir(asset_root)
+        ensure_dir(input_.output_dir)
 
-        for folder in ("images", "styles", "imagers"):
-            src_path = os.path.join(intermediate_root, folder)
-            if os.path.exists(src_path):
-                dst_path = os.path.join(asset_root, folder)
-                shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+        # Flatten topics from all source files
+        all_topics: list[str] = []
+        for topic_list in input_.topics.values():
+            all_topics.extend(topic_list)
 
-    def run(self, topics: Dict[str, List[str]]) -> StageResult:
-        """
-        Write a DITA map referencing all topics and copy assets.
-        """
-        ensure_dir(self.output_dir)
-
-        # Flatten list of topics
-        all_topics: List[str] = []
-        for lst in topics.values():
-            all_topics.extend(lst)
-
-        # Compute relative topicref paths
-        refs = "\n  ".join(
-            make_topicref(p, self.output_dir) for p in sorted(all_topics)
-        )
-
-        # Write DITA map file
-        map_xml = MAP_TEMPLATE.format(title=self.map_title, refs=refs)
-        map_path = os.path.join(self.output_dir, "index.ditamap")
+        # Build and write the DITA map (pure function → I/O write)
+        map_xml = build_map(input_.map_title, all_topics, input_.output_dir)
+        map_path = os.path.join(input_.output_dir, "index.ditamap")
         write_text(map_path, map_xml)
 
-        # Locate intermediate folder for assets
-        intermediate_root = os.path.join(
-            pathlib.Path(self.output_dir).parents[0], "intermediate"
-        )
-        if os.path.exists(intermediate_root):
-            self._copy_assets(intermediate_root)
+        # Copy assets from intermediate directory when available
+        if input_.intermediate_dir and os.path.exists(input_.intermediate_dir):
+            asset_dst = os.path.join(input_.output_dir, "assets")
+            copy_assets(
+                src_root=input_.intermediate_dir,
+                dst_root=asset_dst,
+                asset_folders=("images", "styles", "imagers"),
+            )
 
-        message = (
-            f"Wrote DITA map '{map_path}' with {len(all_topics)} topics. "
-            "Assets copied to assets/ if available."
-        )
-
-        return StageResult(
-            success=True,
-            message=message,
-            data={"map": map_path, "topics": all_topics},
-        )
+        return LoadOutput(map_path=map_path, topic_count=len(all_topics))

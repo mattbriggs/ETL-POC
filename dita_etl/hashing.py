@@ -1,15 +1,13 @@
+"""Deprecated — use ``dita_etl.io.filesystem`` instead."""
 
-import hashlib, pathlib
+import warnings
 
-def file_sha256(path: str) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(8192), b""):
-            h.update(chunk)
-    return h.hexdigest()
+warnings.warn(
+    "dita_etl.hashing is deprecated. Use dita_etl.io.filesystem instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
-def text_sha256(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+from dita_etl.io.filesystem import file_sha256, normalize_path, text_sha256  # noqa: F401
 
-def normalize_path(p: str) -> str:
-    return str(pathlib.Path(p).as_posix())
+__all__ = ["file_sha256", "text_sha256", "normalize_path"]

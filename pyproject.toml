@@ -1,23 +1,73 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+build-backend = "setuptools.backends.legacy:build"
 
 [project]
-name = "dita-etl-pipeline"
-version = "0.1.0"
-description = "Modular ETL pipeline to convert multiple formats into DITA 1.3"
+name = "dita-etl"
+version = "0.2.0"
+description = "A composable pipeline for converting source documents to DITA XML."
 readme = "README.md"
-requires-python = ">=3.10"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
 dependencies = [
-  "prefect>=2.16.0",
-  "pyyaml>=6.0.1",
-  "lxml>=5.2.2",
+    "pyyaml>=6.0",
+    "click>=8.1",
 ]
 
-[tool.setuptools]
-package-dir = {"" = "."}
-packages = ["dita_etl"]   # <-- only install this package
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "mypy>=1.9",
+    "ruff>=0.4",
+    "types-PyYAML>=6.0",
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+]
+
+[project.scripts]
+dita-etl = "dita_etl.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dita_etl*"]
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=dita_etl --cov-report=term-missing --no-header --disable-warnings"
 testpaths = ["tests"]
+addopts = "--cov=dita_etl --cov-report=term-missing --cov-fail-under=90"
+
+[tool.coverage.run]
+source = ["dita_etl"]
+omit = [
+    # CLI entry-point (tested via integration, not unit)
+    "dita_etl/cli.py",
+    # Deprecated compatibility shims — scheduled for removal
+    "dita_etl/orchestrator.py",
+    "dita_etl/runners.py",
+    "dita_etl/io_utils.py",
+    "dita_etl/classify.py",
+    "dita_etl/hashing.py",
+    "dita_etl/assess/assess_config.py",
+    "dita_etl/assess/emit.py",
+    "dita_etl/stages/base.py",
+    "dita_etl/stages/extractors/base.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "PIE", "RET", "SIM"]

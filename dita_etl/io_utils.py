@@ -1,29 +1,19 @@
+"""Deprecated — use ``dita_etl.io.filesystem`` instead."""
 
-from __future__ import annotations
-import os, shutil
-from typing import Tuple
+import warnings
 
-def ensure_dir(path: str) -> None:
-    os.makedirs(path, exist_ok=True)
+warnings.warn(
+    "dita_etl.io_utils is deprecated. Use dita_etl.io.filesystem instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
-def write_text(path: str, content: str) -> None:
-    ensure_dir(os.path.dirname(path))
-    with open(path, "w") as f:
-        f.write(content)
+from dita_etl.io.filesystem import (  # noqa: F401
+    copy_assets as quarantine,
+    ensure_dir,
+    read_text,
+    write_text,
+)
+from dita_etl.io.filesystem import copy_assets as copy_into  # noqa: F401
 
-def read_text(path: str) -> str:
-    with open(path, "r") as f:
-        return f.read()
-
-def quarantine(src_path: str, quarantine_dir: str) -> str:
-    ensure_dir(quarantine_dir)
-    base = os.path.basename(src_path)
-    dst = os.path.join(quarantine_dir, base)
-    shutil.copy2(src_path, dst)
-    return dst
-
-def copy_into(src_path: str, dst_dir: str) -> str:
-    ensure_dir(dst_dir)
-    dst = os.path.join(dst_dir, os.path.basename(src_path))
-    shutil.copy2(src_path, dst)
-    return dst
+__all__ = ["ensure_dir", "write_text", "read_text", "quarantine", "copy_into"]

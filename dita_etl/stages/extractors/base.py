@@ -1,10 +1,14 @@
-from __future__ import annotations
-from typing import Protocol
-from ...runners import SubprocessRunner
+"""Deprecated — use ``dita_etl.extractors.base`` instead."""
 
-class FileExtractor(Protocol):
-    name: str
-    exts: tuple[str, ...]  # handled extensions, e.g. (".md",)
+import warnings
 
-    def extract(self, src: str, dst: str, runner: SubprocessRunner) -> None:
-        ...
+warnings.warn(
+    "dita_etl.stages.extractors is deprecated. "
+    "Use dita_etl.extractors instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+from dita_etl.extractors.base import FileExtractor  # noqa: F401
+
+__all__ = ["FileExtractor"]

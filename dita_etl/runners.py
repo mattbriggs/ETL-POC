@@ -1,15 +1,14 @@
+"""Deprecated — use ``dita_etl.io.subprocess_runner`` instead."""
 
-from __future__ import annotations
-import subprocess
-from typing import List
+import warnings
 
-class SubprocessError(RuntimeError):
-    pass
+warnings.warn(
+    "dita_etl.runners is deprecated. Use dita_etl.io.subprocess_runner instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
-class SubprocessRunner:
-    def run(self, args: List[str], cwd: str | None = None) -> str:
-        try:
-            res = subprocess.run(args, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True, text=True)
-            return res.stdout
-        except subprocess.CalledProcessError as e:
-            raise SubprocessError(e.stdout) from e
+from dita_etl.io.subprocess_runner import RunnerError as SubprocessError  # noqa: F401
+from dita_etl.io.subprocess_runner import SubprocessRunner  # noqa: F401
+
+__all__ = ["SubprocessRunner", "SubprocessError"]

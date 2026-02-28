@@ -1,187 +1,289 @@
-# DITA-ETL Pipeline
+# DITA ETL Pipeline
 
-A modular, Prefect-orchestrated ETL system for converting mixed-format content (HTML, Markdown, DOCX) into structured DITA XML.
+A composable, pure-Python pipeline for converting mixed-format source documents
+(Markdown, HTML, DOCX) into structured DITA 1.3 XML.
 
-Supports assessment, extraction, transformation, and load stages with parallel execution, graceful degradation, and YAML-driven configuration.
+No Prefect. No heavy frameworks. Four orthogonal stages composed through
+typed contracts, with a functional core and a thin imperative shell.
+
+---
+
+## Architecture overview
+
+```mermaid
+flowchart LR
+    IN[("Input files\n(.md / .html / .docx)")]
+
+    subgraph Stage0["Stage 0 · Assess"]
+        A[AssessStage]
+    end
+
+    subgraph Stage1["Stage 1 · Extract"]
+        E[ExtractStage]
+    end
+
+    subgraph Stage2["Stage 2 · Transform"]
+        T[TransformStage]
+    end
+
+    subgraph Stage3["Stage 3 · Load"]
+        L[LoadStage]
+    end
+
+    OUT[("index.ditamap\n+ topics/\n+ assets/")]
+
+    IN --> A
+    A -->|AssessOutput| E
+    E -->|ExtractOutput| T
+    T -->|TransformOutput| L
+    L --> OUT
+```
+
+Each arrow is a **typed, validated frozen dataclass** (`contracts.py`). Stages are
+stateless classes with a single `run(input_) -> output` method.
+
+### Module dependency
+
+```mermaid
+graph TD
+    CLI["cli.py\n(Click)"] --> PL["pipeline.py\n(orchestrator)"]
+    PL --> SA["stages/assess.py"]
+    PL --> SE["stages/extract.py"]
+    PL --> ST["stages/transform.py"]
+    PL --> SL["stages/load.py"]
+
+    SE --> REG["extractors/registry.py\n(Factory)"]
+    REG --> MD["extractors/md_pandoc.py"]
+    REG --> HTML["extractors/html_pandoc.py"]
+    REG --> DOCX["extractors/docx_pandoc.py"]
+    REG --> OXY["extractors/docx_oxygen.py"]
+
+    ST --> CL["transforms/classify.py"]
+    ST --> DT["transforms/dita.py"]
+    SL --> DT
+
+    SA --> INV["assess/inventory.py"]
+    INV --> STR["assess/structure.py"]
+    INV --> FT["assess/features.py"]
+    INV --> SC["assess/scoring.py"]
+    INV --> PR["assess/predict.py"]
+    INV --> DD["assess/dedupe.py"]
+
+    SE --> IO["io/filesystem.py\nio/subprocess_runner.py"]
+    SL --> IO
+    SA --> IO
+```
+
+---
 
 ## Installation
 
 ```bash
 git clone https://github.com/your-org/ETL-POC.git
 cd ETL-POC
-python3 -m venv my_env
-source my_env/bin/activate
-pip install -e .
+
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+pip install -e ".[dev]"
 ```
 
-## Project Structure
+### Prerequisites
+
+| Tool   | Purpose                       | Required? |
+|--------|-------------------------------|-----------|
+| Pandoc | Markdown / HTML / DOCX → DocBook | Yes    |
+| Oxygen | Alternative DOCX extractor    | Optional  |
+
+Install Pandoc via `brew install pandoc` (macOS) or from [pandoc.org](https://pandoc.org).
+
+---
+
+## Quick start
+
+```bash
+# Full pipeline (Assess → Extract → Transform → Load)
+dita-etl run \
+  --config config/config.yaml \
+  --assess-config config/assess.yaml \
+  --input sample_data/input/
+
+# Assessment only (no DITA output)
+dita-etl assess \
+  --config config/config.yaml \
+  --assess-config config/assess.yaml \
+  --input sample_data/input/
+
+# Increase log verbosity
+dita-etl --log-level DEBUG run --input sample_data/input/
+```
+
+---
+
+## Project structure
 
 ```
 ETL-POC/
-├── dita_etl/                 # Core package
-│   ├── stages/               # Extract, transform, load stages
-│   ├── assess/               # Inventory, deduplication, scoring
-│   ├── orchestrator.py       # Prefect flow definition
-│   └── config.py             # Dataclass configuration loader
-├── config/config.yaml        # Example pipeline configuration
-├── sample_data/input/        # Example markdown/html inputs
-├── scripts/cli.py            # Command-line entry point
-└── build/                    # Output artifacts (created automatically)
+├── dita_etl/
+│   ├── cli.py                  # Click CLI (imperative shell)
+│   ├── config.py               # Config dataclasses + YAML loader
+│   ├── contracts.py            # Stage I/O typed contracts
+│   ├── logging_config.py       # Structured logging setup
+│   ├── pipeline.py             # Orchestrator (imperative shell)
+│   │
+│   ├── assess/                 # Assessment sub-pipeline (pure functions)
+│   │   ├── config.py
+│   │   ├── dedupe.py           # MinHash near-duplicate detection
+│   │   ├── features.py         # Section feature extraction
+│   │   ├── inventory.py        # Batch runner (imperative shell)
+│   │   ├── predict.py          # Topic-type prediction
+│   │   ├── report.py           # HTML report rendering
+│   │   ├── scoring.py          # Readiness + risk scoring
+│   │   └── structure.py        # Markdown sectionization
+│   │
+│   ├── extractors/             # Strategy: format → DocBook converters
+│   │   ├── base.py             # FileExtractor protocol
+│   │   ├── docx_oxygen.py
+│   │   ├── docx_pandoc.py
+│   │   ├── html_pandoc.py
+│   │   ├── md_pandoc.py
+│   │   └── registry.py         # Factory: extension → extractor map
+│   │
+│   ├── io/                     # I/O isolation layer
+│   │   ├── filesystem.py       # File R/W, hashing, discovery, asset copy
+│   │   └── subprocess_runner.py
+│   │
+│   ├── stages/                 # Pipeline stages (imperative shell)
+│   │   ├── assess.py
+│   │   ├── extract.py
+│   │   ├── load.py
+│   │   └── transform.py
+│   │
+│   └── transforms/             # Functional core (pure functions)
+│       ├── classify.py         # DITA topic-type classifier
+│       └── dita.py             # DITA XML builders
+│
+├── tests/
+│   ├── unit/                   # Per-module unit tests
+│   └── integration/            # End-to-end stage wiring tests
+│
+├── config/
+│   ├── config.yaml             # Main pipeline config
+│   └── assess.yaml             # Assessment config
+│
+├── docs/                       # MkDocs source
+├── mkdocs.yml
+├── pyproject.toml
+└── requirements.txt
 ```
 
-## Setting Up the Prefect Server
-
-Prefect handles orchestration, logging, and visualization.  
-The ETL pipeline requires a live Prefect API server when run in connected mode.
-
-### Start the Prefect Server (in a separate terminal)
-
-```bash
-prefect server start
-```
-
-You should see:
-
-```
-Starting Prefect server...
-⌛ Waiting for API to start...
-INFO:     Uvicorn running on http://127.0.0.1:4200 (Press CTRL+C to quit)
-INFO:     Prefect UI available at http://127.0.0.1:4200
-```
-
-Keep this window open — this is your live orchestration server.
-
-### Configure the CLI Terminal Environment
-
-Open a **new terminal** for the ETL process:
-
-```bash
-cd ETL-POC
-source my_env/bin/activate
-export PREFECT_API_URL="http://127.0.0.1:4200/api"
-```
-
-### Verify Connection
-
-```bash
-curl http://127.0.0.1:4200/api/admin/version
-```
-
-Expected output:
-
-```json
-{"prefect_version": "3.x.x"}
-```
-
-### Run the Pipeline
-
-```bash
-python3 scripts/cli.py --config config/config.yaml --input "/path/to/input/files"
-```
-
-You should see log output like:
-
-```
-17:32:22.144 | INFO    | prefect.engine - Flow 'DITA ETL Pipeline' started
-17:32:22.901 | INFO    | prefect.task_runner - Task run_extract completed
-17:32:27.702 | INFO    | prefect.engine - Flow run completed: COMPLETED
-```
-
-Visit [http://127.0.0.1:4200](http://127.0.0.1:4200) to view detailed logs and task visualizations.
+---
 
 ## Configuration
 
-### Example: Markdown -> DITA
+### `config/config.yaml`
 
 ```yaml
-source_formats:
-  treat_as_markdown: [".md"]
-
 tooling:
-  pandoc_path: "/usr/local/bin/pandoc"
-  oxygen_scripts_dir: null
-  java_path: "/usr/bin/java"
-  saxon_jar: "/usr/local/lib/saxon-he.jar"
+  pandoc_path: /usr/local/bin/pandoc
 
-dita_output:
-  output_folder: "build/dita_output"
-  map_title: "Markdown to DITA Conversion"
-
-classification_rules:
-  by_filename:
-    - pattern: "guide"
-      type: "task"
-  by_content:
-    - pattern: "install"
-      type: "concept"
-```
-
-### Example: HTML -> DITA
-
-```yaml
 source_formats:
   treat_as_html: [".html", ".htm"]
-
-tooling:
-  pandoc_path: "/usr/local/bin/pandoc"
-  oxygen_scripts_dir: "/Applications/oxygen/scripts"
-  java_path: "/usr/bin/java"
-  saxon_jar: "/usr/local/lib/saxon-he.jar"
+  treat_as_markdown: [".md"]
 
 dita_output:
-  output_folder: "build/dita_output"
-  map_title: "HTML to DITA Conversion"
+  output_folder: build/out
+  map_title: "My Documentation Set"
 
 classification_rules:
   by_filename:
-    - pattern: "reference"
-      type: "reference"
+    - match: "guide"
+      type: "task"
+    - match: "index"
+      type: "concept"
   by_content:
-    - pattern: "procedure"
+    - match: "procedure"
       type: "task"
 ```
 
-## Output Artifacts
+### `config/assess.yaml`
 
-After a successful run:
+```yaml
+shingling:
+  ngram: 7
+  minhash_num_perm: 64
+  threshold: 0.88
 
-```
-build/
-├── assess/                  # Stage 0 assessment reports
-│   ├── inventory.json
-│   ├── dedupe_map.json
-│   └── report.html
-├── intermediate/            # Stage 1 normalized XML (DocBook/HTML5)
-├── dita_output/             # Stage 3 DITA topics + map
-│   ├── topic-1.dita
-│   ├── topic-2.dita
-│   └── index.ditamap
+scoring:
+  topicization_weights:
+    heading_ladder_valid: 10
+    avg_section_len_target: 15
+  risk_weights:
+    deep_nesting: 20
+    complex_tables: 25
+
+limits:
+  target_section_tokens: [50, 500]
 ```
 
-## Common Issues
+---
 
-### Prefect Connection Refused
-If you see:
+## Output artefacts
+
+```mermaid
+graph TD
+    OUT["build/out/"]
+    OUT --> ASS["assess/"]
+    OUT --> INT["intermediate/"]
+    OUT --> DITA["dita/"]
+
+    ASS --> INV["inventory.json\n(per-file metrics + predictions)"]
+    ASS --> DD["dedupe_map.json\n(near-duplicate clusters)"]
+    ASS --> RPT["report.html\n(human-readable summary)"]
+    ASS --> PLN["plans/\n(per-file conversion plans)"]
+
+    INT --> XML["*.xml\n(DocBook staging files)"]
+
+    DITA --> TOP["topics/\n*.dita"]
+    DITA --> AST["assets/\nimages/ · styles/"]
+    DITA --> MAP["index.ditamap"]
 ```
-RuntimeError: Failed to reach API at http://127.0.0.1:4200/api/
-```
--> The Prefect server is not running.  
-Start it with:
+
+---
+
+## Running tests
+
 ```bash
-prefect server start
+pytest                           # all tests with coverage report
+pytest tests/unit/               # unit tests only
+pytest tests/integration/        # integration tests only
+pytest --cov-report=html         # open htmlcov/index.html
 ```
 
-### Output Folder Missing
-No need to pre-create output folders — the ETL automatically calls `ensure_dir()` for intermediate and output directories.
+Coverage threshold: **90%** (enforced by pytest-cov, currently ~93%).
 
-## Notes for Extensibility
+---
 
-- To add a **new extractor** (e.g., `pptx`, `xml`, `pdf`):
-  - Add a new extractor under `dita_etl/stages/extractors/`
-  - Register it in `ExtractStage._build_registry()`
-- To tune classification or chunking:
-  - Edit your YAML config and re-run
-- To run assessments only:
-  ```bash
-  python3 scripts/cli.py --config config/config.yaml --input <dir> --stage assess
-  ```
+## Extending the pipeline
+
+### Adding a new extractor
+
+1. Create `dita_etl/extractors/my_format.py` implementing the `FileExtractor` protocol.
+2. Register it in `dita_etl/extractors/registry.py` (`default_handlers` or `name_map`).
+3. Add unit tests in `tests/unit/test_extractors.py`.
+
+### Adding a new stage
+
+1. Define input/output contracts in `dita_etl/contracts.py`.
+2. Implement the stage in `dita_etl/stages/my_stage.py` — one `run(input_) -> output` method.
+3. Wire it into `dita_etl/pipeline.py`.
+
+---
+
+## Building the documentation
+
+```bash
+pip install -e ".[docs]"
+mkdocs serve          # live preview at http://127.0.0.1:8000
+mkdocs build          # static site → site/
+```

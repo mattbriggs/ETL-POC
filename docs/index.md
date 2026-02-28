@@ -1,33 +1,33 @@
-# ETL documentation
+# DITA ETL Pipeline
 
-About the ETL pipeline, how to run it, and how to interpret results.
+A composable, pure-Python pipeline for converting mixed-format source
+documents (Markdown, HTML, DOCX) into structured DITA 1.3 XML.
 
-## Design and the project
+## Key features
 
-- [Development of the ETL Process](design-project/project.md)
-- [Design and Maintenance](design-project/about-the-design-of-the-app.md)
-- [Content-to-DITA ETL: Vendor-Neutral, Modular Architecture](design-project/etl-design-and-structure.md)
+- **Four stages** — Assess, Extract, Transform, Load — each with single
+  responsibility and validated I/O contracts.
+- **Functional core** — pure transformation functions contain all business
+  logic; I/O is isolated at the imperative shell boundary.
+- **Strategy pattern** — pluggable extractors for each source format.
+- **Factory pattern** — config-driven extractor registry.
+- **No external orchestrator** — plain Python, no heavy frameworks required.
+- **90%+ test coverage** enforced by pytest-cov.
 
-## Manual for the ETL pipeline application
+## Quick links
 
-- [How to Run the DITA ETL Pipeline on a Folder of Markdown Files](manual/etl-how-to-markdown.md)
-- [How To: Configure and Read the ETL Assessment](manual/etl-how-to-read-the-assessment.md)
-- [How To: Change the Extractor for “Specify source content”](manual/how-to-change-extractor-specify-source-content.md)
+- [Architecture and pipeline diagram](pipeline.md)
+- [Stage reference](stages.md)
+- [Configuration guide](configuration.md)
 
-## White papers on ETL and DITA
+## Install
 
-- [A Modular, Tool-Agnostic ETL Process for Content Conversion to DITA XML](white-papers/content_to_dita_etl_whitepaper.pdf)
-- [ETL Pipeline for Converting Multiple Formats to DITA 1.3](white-papers/etl-pipeline-overview.md)
-- [ETL Pipeline User Manual: Converting Unstructured Content to DITA](white-papers/etl-user-manual.md)
-- [Framework for Evaluating ETL Processes (with DITA Conversion Context)xt](white-papers/etl-framework-for-evaluating-etl-processes.md)
+```bash
+pip install -e ".[dev]"
+```
 
-## Related tools and libraries
+## Run
 
-- PandDoc: [https://pandoc.org/](https://pandoc.org/)
-- Prefect: [https://www.prefect.io/](https://www.prefect.io/)
-- DITA Open Toolkit: [https://www.dita-ot.org/](https://www.dita-ot.org/)
-- Oxygen XML Editor: [https://www.oxygenxml.com/](https://www.oxygenxml.com/)
-
-## For more information:
-
-- [DITA ETL Pipeline](../README.md)
+```bash
+dita-etl run --config config/config.yaml --input sample_data/input/
+```

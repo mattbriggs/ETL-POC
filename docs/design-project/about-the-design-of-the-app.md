@@ -5,17 +5,17 @@
 This design keeps the pipeline **predictable, observable, and evolvable**. The assessment stage isn't a report for curiosity; it's a **contracted, machine-consumable gate** that drives chunking and classification decisions, cuts waste by deduping early, and lets you prioritize fixes where they'll save the most effort.
 
 ## Architecture
-- **Stages** (Strategy pattern): `ExtractStage`, `TransformStage`, `LoadStage` implement a common `Stage` interface, enabling substitution and composition.
-- **Runner** (Adapter): `SubprocessRunner` abstracts shell commands (Pandoc/Saxon/Oxygen). Swap with a different runner or a dry-run.
-- **Classification** (Policy): `classify_topic` applies config rules then heuristics.
-- **Config** (Builder): Dataclasses parse YAML into strongly-typed objects.
-- **Flow**: Prefect tasks wrap each stage; a flow wires them together. Parallelism is enabled at the task level and can be extended with thread pools within tasks for heavy I/O.
+- **Stages** (Strategy pattern): `ExtractStage`, `TransformStage`, `LoadStage` each accept a typed frozen dataclass contract and return one, enabling substitution and composition.
+- **Runner** (Adapter): `SubprocessRunner` (`dita_etl/io/subprocess_runner.py`) abstracts shell commands (Pandoc/Saxon/Oxygen). Swap with a recording runner in tests.
+- **Classification** (Policy): `classify_topic` in `dita_etl/transforms/classify.py` applies config rules then heuristics.
+- **Config** (Builder): Dataclasses in `dita_etl/config.py` parse YAML into strongly-typed objects; unknown keys raise `ValueError` at startup.
+- **Orchestrator**: `dita_etl/pipeline.py` → `run_pipeline()` wires the four stages in order using typed contracts.
 
 ## Determinism
-- Stable iteration orders, explicit inputs/outputs, and immutable artifacts. Hashing utilities (`hashing.py`) allow cache keys and verification.
+- Stable iteration orders, explicit inputs/outputs, and immutable frozen dataclass artifacts.
 
 ## Graceful Degradation
-- Extraction errors are captured per-file; pipeline continues. Errors are returned in `StageResult.data["errors"]`.
+- Extraction errors are captured per-file; pipeline continues. Errors are returned in `ExtractOutput.errors`.
 
 ## Extending Formats
 - Implement additional converters in `ExtractStage` (e.g., detect .docx -> use Oxygen Batch Converter).
@@ -32,7 +32,6 @@ This design keeps the pipeline **predictable, observable, and evolvable**. The a
 ## Maintenance
 - Keep config-driven rules up to date.
 - Replace placeholder XSLT with real mapping and wire Saxon call in `_apply_xslt`.
-- Optionally adopt DVC or Prefect blocks for artifact/version management.
 
 Here's an expanded, nuts-and-bolts design you can drop into `docs/design.md` (or merge into your existing "Design & Maintenance" section). I've folded in the **Assessment (Stage 0)** architecture and contracts, and tightened the patterns, data shapes, and operational guidance.
 
@@ -78,26 +77,24 @@ flowchart LR
   T2 -- *.dita/.ditamap --> L0
 ```
 
-- **Orchestrator:** Prefect flow (`build_flow`) wires the stages. Each stage is a **Strategy** (OOP) with a common interface `Stage.run(inputs) -> StageResult`.
+- **Orchestrator:** `run_pipeline()` in `dita_etl/pipeline.py` wires the stages in order using typed frozen dataclass contracts.
 - **Runner:** `SubprocessRunner` is an **Adapter** around CLI tools (Pandoc, Saxon, Oxygen). It captures `stdout/stderr/rc`, normalizes errors.
 - **Policies:** Classification and chunking are **Policy** objects driven by config; heuristics are pluggable.
 
 
 ## 2) Core Modules & Patterns
 
-### 2.1 Stage base class
+### 2.1 Stage contracts
+
+Each stage accepts a typed frozen dataclass and returns one (defined in `dita_etl/contracts.py`):
 
 ```python
-class StageResult:
-    success: bool
-    message: str
-    data: dict  # explicit, serializable payload
-
-class Stage(Protocol):
-    def run(self, inputs: Any) -> StageResult: ...
+# example
+input_  = ExtractInput(source_paths=(...), intermediate_dir="build/intermediate")
+output  = ExtractStage(...).run(input_)   # → ExtractOutput(outputs={...}, errors={...})
 ```
 
-- **Never** return in-memory ASTs across stage boundaries. Persist artifacts, return **paths** + structured JSON.
+- **Never** return in-memory ASTs across stage boundaries. Persist artifacts, return **paths** in the output contract.
 
 ### 2.2 Extract (Stage 1)
 
@@ -138,7 +135,7 @@ class Stage(Protocol):
 
 ### 3.1 Submodules
 
-- `assess_config.py` (**@dataclass** config):
+- `dita_etl/assess/config.py` (dataclass config loaded from `config/assess.yaml`):
   - `shingling` (ngram, permutations, threshold)
   - `scoring` (topicization/risk weights)
   - `classification` (keywords/landmarks)
@@ -230,10 +227,9 @@ Add format adapters in `inventory.py`:
 
 ## 4) Concurrency & Orchestration
 
-- **Prefect tasks** are the unit of orchestration; prefer **idempotent** tasks with explicit inputs/outputs on disk.
-- For I/O-heavy extract/assess, you may parallelize within the task:
-  - Thread pools (safe for CLI calls / file I/O).
-  - Cap concurrency via config (`max_workers`) to avoid thrashing Pandoc/Saxon.
+- `run_pipeline()` in `dita_etl/pipeline.py` is the orchestration entry point; prefer **idempotent** stages with explicit inputs/outputs on disk.
+- For I/O-heavy extract/assess, parallelism runs within the stage using thread pools (safe for CLI calls / file I/O).
+- Cap concurrency via `extract.max_workers` in `config/config.yaml` to avoid thrashing Pandoc/Saxon.
 - Avoid shared mutable state. Write to **unique** temp folders per file, then move into final locations.
 
 **Recommendation:** Keep parallelism coarse-grained (per file) and deterministic (sorted input glob, stable worker count).
@@ -280,7 +276,6 @@ All configs are **schema-checked** in dataclasses; unknown keys should warn (don
 - **Per-task logs:** echo exact CLI args (`pandoc ...`, `java -jar saxon ...`) with redacted secrets.
 - **Artifacts index:** write `build/index.json` listing all produced artifacts and their hashes.
 - **Timings:** measure wall-clock per file and per stage; include in `inventory.json` (`elapsed_ms`).
-- **Prefect server:** prefer a dedicated local server or pin Prefect 2.x for stable dev runs (documented in README).
 
 ## 10) Testing Strategy
 
@@ -326,27 +321,4 @@ All configs are **schema-checked** in dataclasses; unknown keys should warn (don
 - [ ] Stage 2: replace placeholder XSL with production DocBook DITA mapping; add Saxon error surface.
 - [ ] Add JSON Schemas; validate in CI.
 - [ ] Add `build/index.json` + timing + hash sidecars.
-- [ ] Dashboard MVP (Streamlit) reading `build/assess/*.json`.
-
-### Appendix A   Example Prefect Flow (with Stage 0)
-
-```python
-@flow(name="DITA ETL Pipeline")
-def build_flow(config_path: str = "config/config.yaml", input_dir: str = "sample_data/input"):
-    cfg = Config.load(config_path)
-
-    # Stage 0   Assessment (absolute path to avoid CWD surprises)
-    _ = run_assessment(config_path="config/assess.yaml", input_dir=input_dir)
-
-    # Stage 1   Extract
-    exts = sorted({e for k,v in getattr(cfg,"source_formats",{}).items() if k.startswith("treat_as_") for e in v}) or [".md",".docx",".html"]
-    inputs = list_inputs(input_dir, exts)
-    intermediates = run_extract(cfg, inputs)
-
-    # Stage 2   Transform
-    topics = run_transform(cfg, intermediates)
-
-    # Stage 3   Load
-    map_path = run_load(cfg, topics)
-    return map_path
-```
+- [ ] Dashboard MVP reading `build/assess/*.json`.

@@ -44,16 +44,6 @@ source = ["dita_etl"]
 omit = [
     # CLI entry-point (tested via integration, not unit)
     "dita_etl/cli.py",
-    # Deprecated compatibility shims — scheduled for removal
-    "dita_etl/orchestrator.py",
-    "dita_etl/runners.py",
-    "dita_etl/io_utils.py",
-    "dita_etl/classify.py",
-    "dita_etl/hashing.py",
-    "dita_etl/assess/assess_config.py",
-    "dita_etl/assess/emit.py",
-    "dita_etl/stages/base.py",
-    "dita_etl/stages/extractors/base.py",
 ]
 
 [tool.coverage.report]

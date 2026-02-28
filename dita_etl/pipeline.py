@@ -93,6 +93,8 @@ def run_pipeline(
     extract_input = ExtractInput(
         source_paths=tuple(source_paths),
         intermediate_dir=intermediate_dir,
+        handler_overrides=cfg.extract.handler_overrides,
+        max_workers=cfg.extract.max_workers,
     )
     extract_output = extract_stage.run(extract_input)
     _LOG.info(

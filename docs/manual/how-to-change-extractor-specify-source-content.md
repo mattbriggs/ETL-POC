@@ -27,12 +27,13 @@ Directory structure (simplified):
 dita_etl/
   stages/
     extract.py                # ExtractStage: builds registry, runs in parallel
-    extractors/
-      base.py                 # FileExtractor protocol (interface)
-      md_pandoc.py            # .md → DocBook via Pandoc
-      html_pandoc.py          # .html/.htm → DocBook via Pandoc
-      docx_pandoc.py          # .docx → DocBook via Pandoc
-      docx_oxygen.py          # (optional) .docx → DocBook via Oxygen script
+  extractors/
+    base.py                   # FileExtractor protocol (interface)
+    registry.py               # build_registry() factory
+    md_pandoc.py              # .md → DocBook via Pandoc
+    html_pandoc.py            # .html/.htm → DocBook via Pandoc
+    docx_pandoc.py            # .docx → DocBook via Pandoc
+    docx_oxygen.py            # (optional) .docx → DocBook via Oxygen script
 ```
 
 
@@ -55,7 +56,7 @@ Requirements:
 Zero code edits. Re-run:
 
 ```bash
-python scripts/cli.py --config config/config.yaml --input /path/to/corpus
+dita-etl run --config config/config.yaml --input /path/to/corpus
 ```
 
 
@@ -66,10 +67,10 @@ If you need to change **how** an extractor works (arguments, pre/post processing
 
 Example: tweak Pandoc Markdown extractor:
 
-**`dita_etl/stages/extractors/md_pandoc.py`**
+**`dita_etl/extractors/md_pandoc.py`**
 ```python
 from __future__ import annotations
-from ...runners import SubprocessRunner
+from dita_etl.io.subprocess_runner import SubprocessRunner
 
 class MdPandocExtractor:
     name = "pandoc-md"
@@ -105,11 +106,11 @@ If you’re adding a new source or toolchain, create a new class and register it
 
 ### 4.1 Create the extractor
 
-**`dita_etl/stages/extractors/pages_oxygen.py`**
+**`dita_etl/extractors/pages_oxygen.py`**
 ```python
 from __future__ import annotations
 import os
-from ...runners import SubprocessRunner
+from dita_etl.io.subprocess_runner import SubprocessRunner
 
 class PagesOxygenExtractor:
     name = "oxygen-pages"
@@ -126,28 +127,22 @@ class PagesOxygenExtractor:
         runner.run([script, src, dst])
 ```
 
-### 4.2 Import it so the registry can see it
+### 4.2 Register it in the registry factory
 
-**`dita_etl/stages/extractors/__init__.py`**
+**`dita_etl/extractors/registry.py`** — add your extractor to `build_registry()`:
+
 ```python
-from .base import FileExtractor
-from .md_pandoc import MdPandocExtractor
-from .html_pandoc import HtmlPandocExtractor
-from .docx_pandoc import DocxPandocExtractor
-from .docx_oxygen import DocxOxygenExtractor          # if present
-from .pages_oxygen import PagesOxygenExtractor        # <-- add this
+from dita_etl.extractors.pages_oxygen import PagesOxygenExtractor
 
-__all__ = [
-    "FileExtractor",
-    "MdPandocExtractor",
-    "HtmlPandocExtractor",
-    "DocxPandocExtractor",
-    "DocxOxygenExtractor",
-    "PagesOxygenExtractor",
-]
+def build_registry(pandoc_path, oxygen_scripts_dir=None):
+    handlers = [
+        ...
+        PagesOxygenExtractor(oxygen_scripts_dir),   # <-- add this
+    ]
+    ...
 ```
 
-> The `ExtractStage` auto-builds the registry from imported classes and applies `handler_overrides` if provided.
+> `ExtractStage` calls `build_registry()` and applies `handler_overrides` on top.
 
 ### 4.3 Route extensions via config
 
@@ -183,28 +178,21 @@ You generally **don’t** need to touch `ExtractStage`. If you must, there are t
 
 ### 6.1 Unit test the extractor args
 
-**`tests/test_extractors.py`** already includes patterns like:
+Add a test in `tests/unit/` for your new extractor following the `RecordingRunner` pattern used in `tests/unit/test_extract_stage.py`:
 
 ```python
-def _assert_common_pandoc_shape(call, reader, src, dst):
-    assert call[0].endswith("pandoc")
-    assert call[1] == "-f" and call[2] == reader
-    assert call[3] == "-t" and call[4] == "docbook"
-    assert call[-3] == src and call[-2] == "-o" and call[-1] == dst
-```
+def test_pages_oxygen_args(tmp_path):
+    from dita_etl.extractors.pages_oxygen import PagesOxygenExtractor
+    from dita_etl.io.subprocess_runner import SubprocessRunner
 
-Add a test for your new extractor (e.g., Oxygen):
+    class RecordingRunner(SubprocessRunner):
+        def __init__(self): self.calls = []
+        def run(self, args):
+            self.calls.append(list(args))
+            Path(args[-1]).parent.mkdir(parents=True, exist_ok=True)
+            Path(args[-1]).write_text("<docbook/>", encoding="utf-8")
 
-```python
-def test_pages_oxygen_args(tmp_path, monkeypatch):
-    from dita_etl.stages.extractors.pages_oxygen import PagesOxygenExtractor
-    from dita_etl.runners import SubprocessRunner
-
-    class DummyRunner(SubprocessRunner):
-        def __init__(self): self.calls=[]
-        def run(self, args): self.calls.append(args); Path(args[-1]).parent.mkdir(parents=True, exist_ok=True); Path(args[-1]).write_text("<docbook/>")
-
-    runner = DummyRunner()
+    runner = RecordingRunner()
     ext = PagesOxygenExtractor(oxygen_scripts_dir="/opt/oxygen/scripts")
     src = str(tmp_path / "x.pages"); dst = str(tmp_path / "out.xml")
     Path(src).write_text("stub", encoding="utf-8")
@@ -213,13 +201,13 @@ def test_pages_oxygen_args(tmp_path, monkeypatch):
 
     call = runner.calls[0]
     assert "/opt/oxygen/scripts/pages2docbook.sh" in call[0]
-    assert call[-3] == src and call[-1] == dst
+    assert call[-2] == src and call[-1] == dst
     assert Path(dst).exists()
 ```
 
 ### 6.2 Registry routing & overrides
 
-Use/extend the existing `test_pipeline.py`:
+Use/extend `tests/integration/test_pipeline.py`:
 - Verify `.pages` routes to `oxygen-pages` when set in `handler_overrides`.
 - Ensure per-file failures are captured but don’t abort the entire run.
 
@@ -243,8 +231,8 @@ pytest -q
 
 ## 8) Common pitfalls (and fixes)
 
-- **Relative imports:** extractors live at `dita_etl/stages/extractors/`; import the runner with `from ...runners import SubprocessRunner` (three dots).
-- **Registry not seeing your extractor:** make sure it’s imported in `extractors/__init__.py`.
+- **Imports:** extractors live at `dita_etl/extractors/`; import the runner with `from dita_etl.io.subprocess_runner import SubprocessRunner`.
+- **Registry not seeing your extractor:** make sure it’s added to `build_registry()` in `dita_etl/extractors/registry.py`.
 - **Overriding doesn’t work:** the `name` in your extractor must match the string in `handler_overrides` exactly.
 - **Silent failures:** if your extractor swallows exceptions or doesn’t raise on non-zero exit codes, `ExtractStage` can’t quarantine properly. Always raise `SubprocessError` (the default `SubprocessRunner` does this for you).
 
@@ -252,10 +240,10 @@ pytest -q
 
 ## 9) Quick reference
 
-- Add/modify extractor → `dita_etl/stages/extractors/*.py`
-- Register/import → `dita_etl/stages/extractors/__init__.py`
+- Add/modify extractor → `dita_etl/extractors/*.py`
+- Register → `dita_etl/extractors/registry.py` → `build_registry()`
 - Route by config → `config/config.yaml` → `extract.handler_overrides`
-- Parallelism → `extract.max_workers` or `ExtractStage(max_workers=...)`
-- Tests → `tests/test_extractors.py`, `tests/test_pipeline.py`
+- Parallelism → `extract.max_workers` in `config/config.yaml`
+- Tests → `tests/unit/test_extract_stage.py`, `tests/integration/test_pipeline.py`
 
 That’s it. With the registry + overrides in place, changing the “Specify source content” extractor is mostly a **config flip**, and deeper changes are isolated to a single, tiny class.

@@ -9,6 +9,7 @@ from dita_etl.config import (
     Config,
     Chunking,
     DITAOutput,
+    ExtractConfig,
     Tooling,
 )
 
@@ -113,3 +114,108 @@ class TestSourceExtensions:
         exts = cfg.source_extensions()
         # Default source_formats has treat_as_markdown: [".md"]
         assert ".md" in exts
+
+
+class TestExtractConfig:
+    def test_defaults(self, tmp_path):
+        path = _write_yaml(tmp_path, "")
+        cfg = Config.load(path)
+        assert isinstance(cfg.extract, ExtractConfig)
+        assert cfg.extract.handler_overrides == {}
+        assert cfg.extract.max_workers is None
+
+    def test_load_extract_section(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            extract:
+              max_workers: 4
+              handler_overrides:
+                .docx: oxygen-docx
+            """,
+        )
+        cfg = Config.load(path)
+        assert cfg.extract.max_workers == 4
+        assert cfg.extract.handler_overrides == {".docx": "oxygen-docx"}
+
+    def test_extract_max_workers_none(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            extract:
+              handler_overrides: {}
+            """,
+        )
+        cfg = Config.load(path)
+        assert cfg.extract.max_workers is None
+
+
+class TestStrictLoading:
+    def test_unknown_top_level_key_raises(self, tmp_path):
+        path = _write_yaml(tmp_path, "typo_key: value\n")
+        with pytest.raises(ValueError, match="Unknown top-level config key"):
+            Config.load(path)
+
+    def test_unknown_tooling_key_raises(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            tooling:
+              pandoc_path: /bin/pandoc
+              typo: bad
+            """,
+        )
+        with pytest.raises(ValueError, match="Unknown config key"):
+            Config.load(path)
+
+    def test_unknown_dita_output_key_raises(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            dita_output:
+              output_folder: out
+              bad_key: x
+            """,
+        )
+        with pytest.raises(ValueError, match="Unknown config key"):
+            Config.load(path)
+
+    def test_unknown_chunking_key_raises(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            chunking:
+              level: 2
+              oops: true
+            """,
+        )
+        with pytest.raises(ValueError, match="Unknown config key"):
+            Config.load(path)
+
+    def test_unknown_extract_key_raises(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            extract:
+              max_workers: 4
+              unknown_field: bad
+            """,
+        )
+        with pytest.raises(ValueError, match="Unknown config key"):
+            Config.load(path)
+
+    def test_unknown_classification_rule_key_raises(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            textwrap.dedent(
+                """\
+                classification_rules:
+                  by_filename:
+                    - match: index
+                      type: concept
+                      bad_key: oops
+                """
+            ),
+        )
+        with pytest.raises(ValueError, match="Unknown key"):
+            Config.load(path)

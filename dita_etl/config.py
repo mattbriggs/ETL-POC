@@ -3,6 +3,10 @@
 Configuration is loaded once at startup from a YAML file and passed
 immutably through the pipeline. No I/O occurs after initial loading.
 
+Unknown keys in any section raise :class:`ValueError` immediately so that
+mis-spelled or stale configuration is caught at startup rather than silently
+ignored.
+
 Example YAML structure::
 
     tooling:
@@ -12,6 +16,11 @@ Example YAML structure::
 
     source_formats:
       treat_as_html: [".html", ".htm"]
+
+    extract:
+      max_workers: 4
+      handler_overrides:
+        ".docx": "oxygen-docx"
 
     dita_output:
       output_folder: build/out
@@ -28,7 +37,7 @@ Example YAML structure::
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields as dc_fields
 from typing import Any
 
 import yaml
@@ -112,6 +121,43 @@ class Tooling:
     java_path: str = "java"
 
 
+@dataclass
+class ExtractConfig:
+    """Extract stage configuration.
+
+    :param handler_overrides: Mapping of file extension to extractor name,
+        e.g. ``{".docx": "oxygen-docx"}``. Overrides the default handler
+        chosen by the registry for matched extensions.
+    :param max_workers: Thread-pool size for parallel extraction. ``None``
+        uses a sensible default based on CPU count.
+    """
+
+    handler_overrides: dict[str, str] = field(default_factory=dict)
+    max_workers: int | None = None
+
+
+# ---------------------------------------------------------------------------
+# Strict instantiation helper
+# ---------------------------------------------------------------------------
+
+
+def _strict(cls: type, data: dict[str, Any]) -> Any:
+    """Instantiate *cls* from *data*, raising :class:`ValueError` on unknown keys.
+
+    :param cls: Dataclass type to instantiate.
+    :param data: Mapping of keyword arguments sourced from YAML.
+    :returns: New instance of *cls*.
+    :raises ValueError: If *data* contains keys not declared as fields on *cls*.
+    """
+    valid = {f.name for f in dc_fields(cls)}
+    unknown = set(data) - valid
+    if unknown:
+        raise ValueError(
+            f"Unknown config key(s) in {cls.__name__}: {sorted(unknown)}"
+        )
+    return cls(**data)
+
+
 # ---------------------------------------------------------------------------
 # Root config
 # ---------------------------------------------------------------------------
@@ -129,6 +175,7 @@ class Config:
     :param chunking: Chunking parameters.
     :param dita_output: DITA output settings.
     :param tooling: External tool paths.
+    :param extract: Extract stage settings (handler overrides, worker count).
     """
 
     source_formats: dict[str, list[str]] = field(
@@ -140,6 +187,7 @@ class Config:
     chunking: Chunking = field(default_factory=Chunking)
     dita_output: DITAOutput = field(default_factory=DITAOutput)
     tooling: Tooling = field(default_factory=Tooling)
+    extract: ExtractConfig = field(default_factory=ExtractConfig)
 
     # ------------------------------------------------------------------
     # Factory (imperative shell: file I/O lives only here)
@@ -157,8 +205,22 @@ class Config:
         with open(path) as fh:
             data: dict[str, Any] = yaml.safe_load(fh) or {}
 
+        unknown_top = set(data) - {f.name for f in dc_fields(Config)}
+        if unknown_top:
+            raise ValueError(
+                f"Unknown top-level config key(s): {sorted(unknown_top)}"
+            )
+
         def _rules(lst: list[dict[str, Any]] | None) -> list[ClassificationRule]:
-            return [ClassificationRule(**r) for r in (lst or [])]
+            result: list[ClassificationRule] = []
+            for r in lst or []:
+                unknown = set(r) - {"match", "pattern", "type"}
+                if unknown:
+                    raise ValueError(
+                        f"Unknown key(s) in classification rule: {sorted(unknown)}"
+                    )
+                result.append(ClassificationRule(**r))
+            return result
 
         cr_data = data.get("classification_rules") or {}
         classification_rules: dict[str, list[ClassificationRule]] = {
@@ -169,9 +231,10 @@ class Config:
         return Config(
             source_formats=data.get("source_formats") or {},
             classification_rules=classification_rules,
-            chunking=Chunking(**(data.get("chunking") or {})),
-            dita_output=DITAOutput(**(data.get("dita_output") or {})),
-            tooling=Tooling(**(data.get("tooling") or {})),
+            chunking=_strict(Chunking, data.get("chunking") or {}),
+            dita_output=_strict(DITAOutput, data.get("dita_output") or {}),
+            tooling=_strict(Tooling, data.get("tooling") or {}),
+            extract=_strict(ExtractConfig, data.get("extract") or {}),
         )
 
     # ------------------------------------------------------------------

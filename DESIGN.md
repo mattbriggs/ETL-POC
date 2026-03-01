@@ -118,6 +118,7 @@ classDiagram
         +output_dir: str
         +rules_by_filename: tuple
         +rules_by_content: tuple
+        +plans_dir: str | None
         +__post_init__()
     }
 
@@ -295,6 +296,14 @@ flowchart TD
         PRD["predict.predict_topic_type()  ×n sections"]
     end
 
+    subgraph HTML["HTML path (pure)"]
+        HSEC["structure.sectionize_html()"]
+        HFEA["features.extract_features()  ×n sections"]
+        HSCT["scoring.score_topicization()"]
+        HSCR["scoring.score_risk()"]
+        HPRD["predict.predict_topic_type()  ×n sections"]
+    end
+
     subgraph GEN["Generic path (pure)"]
         G["_assess_generic()\nplaceholder scores"]
     end
@@ -310,10 +319,13 @@ flowchart TD
 
     IN --> READ
     READ -->|".md"| SEC
+    READ -->|".html / .htm"| HSEC
     READ -->|"other"| G
 
     SEC --> FEA --> SCT & SCR & PRD
+    HSEC --> HFEA --> HSCT & HSCR & HPRD
     SCT & SCR & PRD --> WJ1
+    HSCT & HSCR & HPRD --> WJ1
     G --> WJ1
 
     WJ1 -->|"all results"| MH --> CL --> WJ2
@@ -377,9 +389,10 @@ flowchart LR
     subgraph Rules["Classification priority"]
         R1["1. filename rules"]
         R2["2. content rules"]
-        R3["3. heuristics\n(imperative density etc.)"]
-        R4["4. default: concept"]
-        R1 --> R2 --> R3 --> R4
+        R3["3. plan hint\n(from assess/*.conversion_plan.json)"]
+        R4["4. heuristics\n(imperative density etc.)"]
+        R5["5. default: concept"]
+        R1 --> R2 --> R3 --> R4 --> R5
     end
 
     FS["topics/\ndoc_concept.dita\n(DITA 1.3)"]
@@ -579,3 +592,5 @@ monkey-patching of stdlib required in extractor tests.
 | Removed Prefect | Prefect / Airflow | Removes a heavy optional dependency; four sequential stages do not require a workflow engine |
 | Separate `transforms/` module | Inline logic in stages | Enables direct unit testing of transformation logic without any I/O setup |
 | `walk_up=True` in `make_topicref` | Require topics inside map dir | DITA maps legitimately reference topics in sibling directories; `walk_up` produces valid relative hrefs |
+| Assessment-driven classification (plan hint at priority 3) | Heuristics-only | Assess stage writes a `default_topic_type` prediction; wiring it through `plans_dir` → `TransformInput` lets the predictor inform Transform without breaking config rule precedence |
+| `requires-python = ">=3.12"` | Support 3.11 | `walk_up=True` was introduced in Python 3.12; declaring the correct minimum avoids silent runtime failures on 3.11 |

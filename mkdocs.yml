@@ -37,6 +37,7 @@ plugins:
 
 nav:
   - Home: index.md
+  - User Guide: user-guide.md
   - Architecture: pipeline.md
   - Stages: stages.md
   - Configuration: configuration.md

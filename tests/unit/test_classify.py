@@ -61,3 +61,48 @@ class TestClassifyTopic:
     def test_no_rules_no_heuristic_match(self):
         result = classify_topic("doc.md", "The sky is blue.", [], [])
         assert result == "concept"
+
+    # --- Verbatim config.py docstring examples ---
+
+    def test_config_example_filename_rule_index(self):
+        # config.py docstring: by_filename match: "index" type: "concept"
+        # Regression: bare stem pattern "index" must match "index.md".
+        rules = [ClassificationRule(match="index", type="concept")]
+        result = classify_topic("index.md", "Overview of the system.", rules, [])
+        assert result == "concept"
+
+    def test_config_example_content_rule_procedure(self):
+        # config.py docstring: by_content match: "procedure" type: "task"
+        rules = [ClassificationRule(match="procedure", type="task")]
+        result = classify_topic("doc.md", "Follow this procedure.", [], rules)
+        assert result == "task"
+
+    def test_filename_stem_matched_not_full_basename(self):
+        # Pattern without wildcard must match the stem, not the full "stem.ext".
+        rules = [ClassificationRule(pattern="index", type="concept")]
+        assert classify_topic("index.md", "x", rules, []) == "concept"
+        assert classify_topic("index.html", "x", rules, []) == "concept"
+        assert classify_topic("notindex.md", "x", rules, []) == "concept"
+
+    # --- plan_type parameter tests ---
+
+    def test_plan_type_used_when_no_rule_matches(self):
+        # No rules and neutral content → plan_type should be used.
+        result = classify_topic("doc.md", "The sky is blue.", [], [], plan_type="reference")
+        assert result == "reference"
+
+    def test_config_rule_beats_plan_type(self):
+        # A filename rule takes priority over plan_type.
+        rules = [ClassificationRule(pattern="guide*", type="task")]
+        result = classify_topic("guide.md", "The sky is blue.", rules, [], plan_type="reference")
+        assert result == "task"
+
+    def test_plan_type_beats_heuristic(self):
+        # Content has "click" (task heuristic), but plan_type says "concept".
+        result = classify_topic("doc.md", "Click the button.", [], [], plan_type="concept")
+        assert result == "concept"
+
+    def test_invalid_plan_type_ignored(self):
+        # An unknown plan_type must not suppress heuristics.
+        result = classify_topic("doc.md", "Click the button.", [], [], plan_type="bogus")
+        assert result == "task"

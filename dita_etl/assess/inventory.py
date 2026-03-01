@@ -16,7 +16,7 @@ from dita_etl.assess.features import extract_features
 from dita_etl.assess.predict import predict_topic_type
 from dita_etl.assess.report import render_report_html, write_json, write_text
 from dita_etl.assess.scoring import score_risk, score_topicization
-from dita_etl.assess.structure import heading_ladder_valid, sectionize_markdown
+from dita_etl.assess.structure import heading_ladder_valid, sectionize_html, sectionize_markdown
 from dita_etl.io.filesystem import file_sha256, read_text
 
 
@@ -34,6 +34,66 @@ def _assess_markdown(path: str, text: str, cfg: AssessConfig) -> dict[str, Any]:
     :returns: Per-file assessment result dictionary.
     """
     sections = sectionize_markdown(text)
+    features_list = [extract_features(s, cfg.classification) for s in sections]
+
+    avg_tokens = int(
+        sum(f["tokens"] for f in features_list) / max(1, len(features_list))
+    )
+    metrics: dict[str, Any] = {
+        "heading_ladder_valid": heading_ladder_valid(sections),
+        "avg_section_tokens": avg_tokens,
+        "tables_simple": all(f["tables"] <= 1 for f in features_list),
+        "lists_depth_ok": True,
+        "images_with_alt": True,
+        "deep_nesting": False,
+        "complex_tables": any(f["tables"] > 1 for f in features_list),
+        "unresolved_anchors": False,
+        "mixed_inline_blocks": False,
+    }
+
+    readiness = score_topicization(
+        metrics,
+        cfg.scoring.topicization_weights,
+        cfg.limits.target_section_tokens,
+    )
+    risk = score_risk(metrics, cfg.scoring.risk_weights)
+
+    predictions = []
+    for idx, (section, feats) in enumerate(zip(sections, features_list)):
+        topic_type, confidence, reasons = predict_topic_type(feats, cfg.classification)
+        predictions.append({
+            "index": idx,
+            "title": section.get("title", ""),
+            "pred": topic_type,
+            "confidence": confidence,
+            "reasons": reasons,
+        })
+
+    return {
+        "path": path,
+        "size": os.path.getsize(path),
+        "sha256": file_sha256(path),
+        "sections": len(sections),
+        "metrics": metrics,
+        "topicization_readiness": readiness,
+        "conversion_risk": risk,
+        "predictions": predictions,
+        "raw_sections": [
+            {"title": s.get("title", ""), "content": s.get("content", "")}
+            for s in sections
+        ],
+    }
+
+
+def _assess_html(path: str, text: str, cfg: AssessConfig) -> dict[str, Any]:
+    """Assess a single HTML file and return its metrics dictionary.
+
+    :param path: Source file path (used only as a metadata label).
+    :param text: Full text content of the file.
+    :param cfg: Assessment configuration.
+    :returns: Per-file assessment result dictionary.
+    """
+    sections = sectionize_html(text)
     features_list = [extract_features(s, cfg.classification) for s in sections]
 
     avg_tokens = int(
@@ -134,8 +194,11 @@ def assess_batch(
     results: list[dict[str, Any]] = []
     for path in input_files:
         text = read_text(path)
-        if path.lower().endswith(".md"):
+        lower = path.lower()
+        if lower.endswith(".md"):
             results.append(_assess_markdown(path, text, cfg))
+        elif lower.endswith(".html") or lower.endswith(".htm"):
+            results.append(_assess_html(path, text, cfg))
         else:
             results.append(_assess_generic(path, text))
 

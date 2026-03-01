@@ -7,13 +7,33 @@ Classification and XML building are delegated to pure functions in
 
 from __future__ import annotations
 
+import json
 import os
 import pathlib
+from typing import Any
 
 from dita_etl.contracts import TransformInput, TransformOutput
 from dita_etl.io.filesystem import ensure_dir, read_text, write_text
 from dita_etl.transforms.classify import classify_topic
 from dita_etl.transforms.dita import build_topic, extract_body, extract_title
+
+
+def _load_plan(plans_dir: str, source_path: str) -> dict[str, Any] | None:
+    """Read the conversion plan JSON for *source_path* from *plans_dir*.
+
+    Plan filename convention: ``<basename>.conversion_plan.json``
+    (matches the convention used by :func:`dita_etl.assess.inventory.assess_batch`).
+
+    :param plans_dir: Directory that contains per-file conversion plan JSONs.
+    :param source_path: Path to the source file whose plan should be loaded.
+    :returns: Parsed plan dict, or ``None`` if the plan file does not exist.
+    """
+    basename = os.path.basename(source_path)
+    plan_file = os.path.join(plans_dir, f"{basename}.conversion_plan.json")
+    if not os.path.exists(plan_file):
+        return None
+    with open(plan_file, encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 class TransformStage:
@@ -47,11 +67,17 @@ class TransformStage:
                 docbook_text = read_text(xml_path)
                 title = extract_title(docbook_text)
                 body = extract_body(docbook_text)
+                plan_type: str | None = None
+                if input_.plans_dir is not None:
+                    plan = _load_plan(input_.plans_dir, src)
+                    if plan is not None:
+                        plan_type = plan.get("default_topic_type")
                 topic_type = classify_topic(
                     os.path.basename(src),
                     docbook_text,
                     list(input_.rules_by_filename),
                     list(input_.rules_by_content),
+                    plan_type=plan_type,
                 )
                 dita_xml = build_topic(title, body, topic_type)
                 out_name = pathlib.Path(src).stem + f"_{topic_type}.dita"

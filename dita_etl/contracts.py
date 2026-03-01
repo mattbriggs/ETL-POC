@@ -136,12 +136,18 @@ class TransformInput:
     :param output_dir: Directory where DITA topic files will be written.
     :param rules_by_filename: Classification rules matched against filenames.
     :param rules_by_content: Classification rules matched against file content.
+    :param plans_dir: Optional path to the directory containing per-file
+        conversion plan JSONs from the Assess stage. When set, the Transform
+        stage looks up ``<basename>.conversion_plan.json`` and uses
+        ``default_topic_type`` as a classification hint (lower priority than
+        config rules, higher than built-in heuristics).
     """
 
     intermediates: dict[str, str]
     output_dir: str
     rules_by_filename: tuple[object, ...] = field(default_factory=tuple)
     rules_by_content: tuple[object, ...] = field(default_factory=tuple)
+    plans_dir: str | None = None
 
     def __post_init__(self) -> None:
         if not self.output_dir:

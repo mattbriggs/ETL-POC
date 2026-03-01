@@ -11,6 +11,8 @@ import re
 from typing import Any
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)", re.MULTILINE)
+_HTML_HEADING_RE = re.compile(r"<h([1-6])(?:[^>]*)>(.*?)</h[1-6]>", re.IGNORECASE | re.DOTALL)
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
 
 
 def sectionize_markdown(text: str) -> list[dict[str, Any]]:
@@ -40,7 +42,7 @@ def sectionize_markdown(text: str) -> list[dict[str, Any]]:
     for line in lines:
         match = _HEADING_RE.match(line)
         if match:
-            if current["content"]:
+            if current["level"] > 0 or current["content"]:
                 sections.append(
                     {**current, "content": "\n".join(current["content"]).strip()}
                 )
@@ -57,6 +59,54 @@ def sectionize_markdown(text: str) -> list[dict[str, Any]]:
         sections.append(
             {**current, "content": "\n".join(current["content"]).strip()}
         )
+    return sections
+
+
+def sectionize_html(text: str) -> list[dict[str, Any]]:
+    """Split an HTML document into logical sections at heading boundaries.
+
+    Produces the same ``{level, title, content}`` shape as
+    :func:`sectionize_markdown`, making the two functions interchangeable
+    in assessment pipelines.
+
+    :param text: Raw HTML source text.
+    :returns: Ordered list of section dictionaries.
+
+    :Example:
+
+    .. code-block:: python
+
+        secs = sectionize_html("<h1>Intro</h1><p>Hello</p><h2>Details</h2><p>More</p>")
+        assert secs[0]["title"] == "Intro"
+        assert secs[1]["title"] == "Details"
+    """
+    if not text:
+        return []
+
+    sections: list[dict[str, Any]] = []
+    current: dict[str, Any] = {"level": 0, "title": "Document", "content": ""}
+    last_end = 0
+
+    for match in _HTML_HEADING_RE.finditer(text):
+        # Collect text between the previous heading and this one
+        between = text[last_end:match.start()]
+        stripped_content = _HTML_TAG_RE.sub("", between).strip()
+
+        if current["level"] > 0 or stripped_content:
+            sections.append({**current, "content": (current["content"] + stripped_content).strip()})
+
+        current = {
+            "level": int(match.group(1)),
+            "title": _HTML_TAG_RE.sub("", match.group(2)).strip(),
+            "content": "",
+        }
+        last_end = match.end()
+
+    # Flush the final section
+    tail = _HTML_TAG_RE.sub("", text[last_end:]).strip()
+    if current["level"] > 0 or tail:
+        sections.append({**current, "content": (current["content"] + tail).strip()})
+
     return sections
 
 

@@ -1,0 +1,936 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Composable pipeline for converting source documents to DITA XML">
+      
+      
+        <meta name="author" content="Heretto">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>ETL Pipeline User Manual: Converting Unstructured Content to DITA - DITA ETL Pipeline</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#etl-pipeline-user-manual-converting-unstructured-content-to-dita" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="DITA ETL Pipeline" class="md-header__button md-logo" aria-label="DITA ETL Pipeline" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            DITA ETL Pipeline
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ETL Pipeline User Manual: Converting Unstructured Content to DITA
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/your-org/ETL-POC" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../pipeline/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../stages/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Stages
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/contracts/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="DITA ETL Pipeline" class="md-nav__button md-logo" aria-label="DITA ETL Pipeline" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    DITA ETL Pipeline
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/your-org/ETL-POC" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/transforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transforms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/assess/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assess
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="etl-pipeline-user-manual-converting-unstructured-content-to-dita">ETL Pipeline User Manual: Converting Unstructured Content to DITA<a class="headerlink" href="#etl-pipeline-user-manual-converting-unstructured-content-to-dita" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This user manual explains how to build an <strong>Extract-Transform-Load (ETL) pipeline</strong> to convert unstructured or mixed-format content into <strong>DITA</strong> (Darwin Information Typing Architecture) XML. It is intended for support staff working with a component content management system (CCMS) who will design and maintain these content conversion pipelines. The goal of the project is to systematically <strong>extract</strong> content from legacy sources, <strong>transform</strong> it into semantically rich DITA topics, and <strong>load</strong> it into the CCMS for ongoing management. The focus is on practical, “nuts and bolts” guidance delivered in a professional, experienced tone. Throughout this manual, we emphasize how preserving and enhancing the <strong>semantic meaning</strong> of content is essential – it adds significant value for content owners (e.g., documentation teams) and end users or readers of that content.</p>
+<p><strong>What is DITA and Why Use It?</strong> DITA is an XML-based open standard for structured content authoring. It encourages a <strong>topic-based, modular approach</strong> where content is split into discrete topics (such as concepts, tasks, and reference topics) that can be reused and recombined in many publications <a href="https://www.madcapsoftware.com/blog/content-management-dita/#:~:text=DITA%20isn%27t%20a%20content%20management,is%20difficult%20to%20manage%20manually">oai_citation:0‡madcapsoftware.com</a> <a href="https://www.madcapsoftware.com/blog/content-management-dita/#:~:text=Envision%20your%20content%20strategy%20as,dynamic%20and%20adaptable%20content%20ecosystem">oai_citation:1‡madcapsoftware.com</a>. By moving from unstructured documents (like Word files, PDFs, HTML pages, etc.) to DITA, organizations gain consistency, reuse, and easier multi-channel publishing. In a DITA-based CCMS, topics become individual content components that multiple documents can share, enabling content reuse and efficient updates. DITA also allows authors to tag content with <strong>semantic meaning</strong> (for example, identifying something as a step in a procedure, or a UI element name), which improves content findability and automated processing <a href="https://www.oxygenxml.com/doc/versions/27.1/ug-editor/topics/eppo-pathfinder-structure.html#:~:text=Semantic%20structure%20is%20important%20in,products%20from%20the%20same%20source">oai_citation:2‡oxygenxml.com</a> <a href="https://www.rws.com/blog/unlocking-organizational-knowledge/#:~:text=Semantic%20structure%20and%20predictability%3A%20XML,based%20on%20the%20user%27s%20intent">oai_citation:3‡rws.com</a>. In short, DITA helps keep documentation precise, consistent, and easier to maintain across formats and platforms <a href="https://www.madcapsoftware.com/blog/content-management-dita/#:~:text=DITA%20isn%27t%20a%20content%20management,is%20difficult%20to%20manage%20manually">oai_citation:4‡madcapsoftware.com</a>.</p>
+<p><strong>About This Manual:</strong> We will first discuss the philosophy and benefits of ETL for content, then walk through each phase of the pipeline: planning, extraction of source material, transformation to DITA, loading into the CCMS, and quality assurance. Along the way, best practices and tips are provided to ensure the converted content retains its intended meaning and maximizes its value to both content owners and readers.</p>
+<h2 id="etl-philosophy-and-benefits-of-structured-content">ETL Philosophy and Benefits of Structured Content<a class="headerlink" href="#etl-philosophy-and-benefits-of-structured-content" title="Permanent link">&para;</a></h2>
+<p>Converting unstructured content to DITA is not just a mechanical format change – it’s a <strong>strategic effort to enrich content with structure and semantics</strong>. The guiding philosophy is that by investing in a careful ETL process now, you greatly enhance the content’s long-term value. Here are the key principles and benefits behind this philosophy:</p>
+<ul>
+<li>
+<p><strong>Preserve and Add Semantic Meaning:</strong> Unstructured source documents often rely on visual styling or ad-hoc conventions to convey meaning (for example, a bold line indicating a warning, or an indented paragraph indicating a note). In the ETL process, it’s crucial to capture the <em>intended meaning</em> of each element, not just its appearance. DITA encourages semantic tagging – e.g. marking text as a <code>&lt;note&gt;</code> (for a note or warning), a <code>&lt;codeblock&gt;</code> (for code examples), or a <code>&lt;task&gt;</code> (for procedural instructions). Semantic structure is important because it allows both authors and readers to find and use content more effectively, and it enables processing tools to handle content intelligently based on meaning <a href="https://www.oxygenxml.com/doc/versions/27.1/ug-editor/topics/eppo-pathfinder-structure.html#:~:text=Semantic%20structure%20is%20important%20in,products%20from%20the%20same%20source">oai_citation:5‡oxygenxml.com</a>. In fact, DITA’s XML format <em>requires</em> authors to tag content with specific purposes (like task, concept, reference), which makes the content <strong>self-describing</strong> and easier to manage <a href="https://www.rws.com/blog/unlocking-organizational-knowledge/#:~:text=Semantic%20structure%20and%20predictability%3A%20XML,based%20on%20the%20user%27s%20intent">oai_citation:6‡rws.com</a>. Embracing this in your pipeline means the output isn’t just a tagged version of the old docs, but a <strong>more intelligent and searchable knowledge asset</strong>. </p>
+</li>
+<li>
+<p><strong>Structured Content as a Value-Add:</strong> By adding structure to content, you unlock numerous benefits for content owners and readers. Authors (content owners) gain the ability to easily reuse and update content. For example, a procedure written once as a DITA task topic can be included in multiple manuals without copy-paste, ensuring consistency. Readers benefit from consistency in how information is presented and can receive more tailored content. For instance, because DITA topics are modular and carry metadata, a publishing system can filter or assemble content relevant to a product variant or user role. One source describes that <em>with strategic semantic tagging, DITA transforms content from just informative to a dynamic, interactive instrument that engages users, drives comprehension, and elevates user experience</em> <a href="https://www.madcapsoftware.com/blog/content-management-dita/#:~:text=DITA%27s%20true%20potency%20lies%20in,usability%2C%20helping%20organizations%20customize%20delivery">oai_citation:7‡madcapsoftware.com</a> <a href="https://www.madcapsoftware.com/blog/content-management-dita/#:~:text=to%20suit%20their%20audience%27s%20specific,users%2C%20drives%20comprehension%2C%20and%20elevates">oai_citation:8‡madcapsoftware.com</a>. In simpler terms, structured DITA content is easier to search, easier to navigate, and can even be leveraged by AI or help systems to deliver exactly what the user needs. Content owners thus see their material become more <strong>future-proof and multi-purpose</strong>, increasing its value.</p>
+</li>
+<li>
+<p><strong>“More than Just Adding Tags”:</strong> A common misconception is that migrating to DITA is as simple as wrapping existing text in XML tags. In reality, <em>migrating to DITA means more than just adding element tags</em> <a href="https://www.scriptorium.com/2020/07/dita-migration-strategies/#:~:text=Migrating%20to%20DITA%20means%20more,a%20plan%20in%20place%20for">oai_citation:9‡scriptorium.com</a>. The ETL process must consider deeper changes: breaking large documents into <strong>topic components</strong>, rethinking how content interrelates (links, navigation), and handling media and metadata in new ways. Simply converting a Word file to DITA without adjusting structure may technically produce a DITA file, but you might not reap the full benefits of structured content. Therefore, the philosophy is to approach the migration holistically – plan for reuse, linking, and modularity during the transformation (details on these in later sections). This ensures that once loaded into the CCMS, the content is optimized for collaborative editing, content reuse, and efficient publishing, rather than just being “the old doc in new clothes.”</p>
+</li>
+<li>
+<p><strong>Quality Over 100% Automation:</strong> ETL for documents is not an exact science – there will always be edge cases and cleanup needed. The aim is to automate as much as possible, but also to recognize that some manual intervention will be necessary to achieve high quality. As one expert noted, <em>migration from proprietary formats to XML is never perfect and manual changes need to be made</em> <a href="https://blog.oxygenxml.com/topics/migratingFmToDita.html#:~:text=Note%20that%20migration%20from%20proprietary,extra%20processing%20using%20refactoring%20operations">oai_citation:10‡blog.oxygenxml.com</a>. Accept this as part of the philosophy: the team should budget time for reviewing and polishing the converted DITA content, rather than expecting a one-click perfect conversion. The payoff is a higher-quality knowledge base that serves the organization and readers better.</p>
+</li>
+<li>
+<p><strong>Semantic Value for Owners and Users:</strong> Ultimately, the reason we put effort into this ETL pipeline is the <strong>semantic value</strong> it adds for all stakeholders. Content owners (such as technical writers or documentation managers) get content that is <strong>consistent, easier to update, and analyze</strong>. For example, since DITA enforces consistent structures, authors won’t miss a step in a procedure or forget a section heading – the templates guide them, and changes can cascade through reused topics ensuring uniform updates. Readers get content that is <strong>reliable and tailored</strong> – for instance, with DITA’s semantic markup and metadata, a user can filter a manual for their specific product model or language, or a help system can pull only the relevant troubleshooting topics for an issue. Additionally, structured content can integrate with modern delivery platforms; it can be turned into chatbots, personalized help, or included in a knowledge graph. Rich semantic structure means content isn’t just text on a page – it’s part of a connected content network that can be leveraged in many ways to improve user experience <a href="https://www.rws.com/blog/unlocking-organizational-knowledge/#:~:text=Topic,with%20an%20explicitly%20described%20purpose">oai_citation:11‡rws.com</a> <a href="https://www.rws.com/blog/unlocking-organizational-knowledge/#:~:text=Rich%20metadata%20capabilities%3A%20Structured%20content,effectiveness%20of%20the%20retrieval%20process">oai_citation:12‡rws.com</a>. </p>
+</li>
+</ul>
+<p>In summary, the ETL philosophy here is to <strong>treat content conversion as a transformation of information quality</strong>, not just format. By doing so, the support staff building these pipelines contribute directly to the improved semantic richness of the content, which is an essential value-add recognized by both content owners and end users.</p>
+<h2 id="planning-and-preparation-for-conversion">Planning and Preparation for Conversion<a class="headerlink" href="#planning-and-preparation-for-conversion" title="Permanent link">&para;</a></h2>
+<p>Before diving into extraction or coding transformation rules, thorough <strong>planning and preparation</strong> is crucial. Up-front planning saves time by preventing rework and ensures that the conversion aligns with business needs. This phase involves understanding the content, setting goals, and preparing resources:</p>
+<ol>
+<li>
+<p><strong>Define the Conversion Scope:</strong> Begin by determining the <strong>scope</strong> of your conversion project – what content will be converted in this pipeline, and what the end result should include. Identify the repositories or document sets that are in scope (for example, a set of user manuals, knowledge base articles, or a mix of formats from various departments). Specify the desired <strong>output structure in DITA</strong>: will the output be a set of DITA topics and a master DITA map representing each original document? Are you targeting DITA 1.3 or 2.0, or any specific specializations? Clarify any content that is out-of-scope (perhaps extremely outdated docs or content that will be retired instead of converted). It’s also wise to note any constraints or requirements, such as preserving certain metadata (authors, version history) or meeting style guide rules in the converted content <a href="https://www.stilo.com/2023/07/12/how-to-convert-structured-and-unstructured-content-to-dita-xml/#:~:text=steps%20to%20guide%20you%20through,the%20conversion">oai_citation:13‡stilo.com</a> <a href="https://www.stilo.com/2023/07/12/how-to-convert-structured-and-unstructured-content-to-dita-xml/#:~:text=3,as%20per%20your%20specific%20requirements">oai_citation:14‡stilo.com</a>.</p>
+</li>
+<li>
+<p><strong>Assess the Source Content:</strong> Perform a detailed review of the source material to understand its structure, complexity, and potential conversion hurdles. Different content types may require different handling. For example, a collection of Word documents may have inconsistent use of styles, manual formatting, and embedded media; a set of HTML files might contain legacy tags or scripts; PDF files might require OCR if original source is unavailable. Identify elements like <strong>headings, lists, tables, images, and special formatting</strong> in the source, and note any challenges (complex nested lists, multi-column layouts, conditional text indicators, etc.) <a href="https://www.stilo.com/2023/07/12/how-to-convert-structured-and-unstructured-content-to-dita-xml/#:~:text=in%20DITA%20XML,for%20extracting%20content%20from%20the">oai_citation:15‡stilo.com</a>. Pay special attention to any <em>non-standard layouts or inconsistent patterns</em>, as these will influence your transformation rules. It’s helpful to classify content into types – e.g., <em>chapter-based manuals</em>, <em>step-by-step guides</em>, <em>reference tables</em>, etc. – as DITA has different topic types (concept, task, reference) that might map to these. An assessment might reveal, for instance, that what looks like one document actually contains multiple logical topics (which should become separate DITA topics). Also, look for <em>repeated content</em>: are there chunks of identical or very similar text across files? Identifying reusable content at this stage allows you to plan to convert it once and reuse it in multiple places, rather than converting duplicates. This content audit forms the foundation for the conversion strategy.</p>
+</li>
+<li>
+<p><strong>Develop a Conversion Strategy:</strong> With scope and content analysis in hand, formulate the strategy for extraction and transformation. Decide on the <strong>best approach to extract content</strong> from the sources – this could involve using conversion tools, writing scripts, or leveraging existing save/export functions. For example, if the source is a set of Word documents, will you use a tool (or script) to save them as an intermediate format like HTML or XML first? If the source is a legacy Help system or database, will you use an export API or scrape the content? Determine the level of <strong>automation</strong> vs. manual work: ideally, aim to automate the bulk of the conversion with scripts or conversion software for efficiency <a href="https://www.stilo.com/2023/07/12/how-to-convert-structured-and-unstructured-content-to-dita-xml/#:~:text=3,as%20per%20your%20specific%20requirements">oai_citation:16‡stilo.com</a>. Consider any specialized conversion software (there are commercial tools for Word to DITA or FrameMaker to DITA, etc.) or whether using a general-purpose tool like <strong>XSLT stylesheets, Python scripts, or a content conversion library</strong> is appropriate. Also plan for metadata and hierarchy: for instance, if each Word file corresponds to a chapter, plan to generate a DITA <code>&lt;map&gt;</code> to collect topics, maintaining the hierarchy of headings as nested topics in the map. <strong>Mapping rules</strong> should be drafted in this phase – essentially a conversion matrix that says “Source pattern X -&gt; DITA element Y”. For example: “Word Heading 1 -&gt; DITA topic title (new topic), Heading 2 -&gt; <code>&lt;section&gt;</code> or perhaps a nested topic depending on desired granularity, Word <em>Warning</em> style -&gt; DITA <code>&lt;note type="warning"&gt;</code> element, etc. Planning these mappings now will guide your transformation implementation. This is also the time to decide if you need any <strong>DITA specialization or customization</strong>. In most cases, standard DITA works, but some projects might benefit from specialized DITA document types for certain content (e.g., a specialized <code>&lt;procedure&gt;</code> topic type for a specific industry). If so, plan to have those DTD/Schema ready so your output aligns to them <a href="https://www.stilo.com/2023/07/12/how-to-convert-structured-and-unstructured-content-to-dita-xml/#:~:text=source%2C%20including%20text%2C%20images%2C%20tables%2C,and%20other%20content%20elements%20will">oai_citation:17‡stilo.com</a>.</p>
+</li>
+<li>
+<p><strong>Set Up Tools and Environment:</strong> Ensure you have the necessary tools installed and configured. This likely includes an <strong>XML editor or DITA authoring tool</strong> (to verify and tweak output), a way to run automated conversions (scripting environment or conversion tool), and access to the CCMS or a staging environment for loading content. If using a CCMS, find out the import format it expects (many CCMS can directly import DITA files and images, but perhaps there are specific packaging or metadata requirements). Prepare any intermediate tools – for example, if converting FrameMaker, you might use FrameMaker’s conversion tables or MIF (Maker Interchange Format) exports; if converting HTML, you might use an HTML-to-DITA transformation utility. Setting up a version control or backup system for your source and converted files is also recommended, so you can iterate safely. <strong>Invest in team training if needed</strong> – make sure the team understands the basics of DITA and the tools. As one expert put it, <em>it’s very important that your team knows not just the tool, but also the concepts behind it – the concept of structured content creation and related ideas</em> <a href="https://www.scriptorium.com/2024/01/tips-for-moving-from-unstructured-to-structured-content/#:~:text=I%20mentioned%20it%20before%2C%20invest,type%20of%20program%2C%20where%20there%E2%80%99s">oai_citation:18‡scriptorium.com</a>. A short training or review of DITA topic structure and tagging guidelines at the outset can prevent misuse of tags later in the process.</p>
+</li>
+<li>
+<p><strong>Pilot and Prototype:</strong> Before converting everything, run a <strong>pilot conversion</strong> on a small sample of content. Choose a representative subset of documents (for example, one user manual, one technical spec, and one FAQ – whatever reflects the range of content types you have). Apply your planned extraction and transformation approach to this sample. This will test your mapping rules and toolchain. Expect to iterate – you might discover that some content structure wasn’t handled correctly or that certain source quirks require adjustments to your strategy. It’s better to “fail fast” on a small set and refine the process than to convert hundreds of topics and then realize you need to redo them. As one migration expert advises, <em>start small and then scale up – take one of each major content type, convert it, and refine your conversion process (your “conversion matrix”) through back-and-forth testing. This ensures that when you convert the rest, you’ll have a lot less cleanup to do</em> <a href="https://www.scriptorium.com/2024/01/tips-for-moving-from-unstructured-to-structured-content/#:~:text=Dipo%20Ajose,tuning%20that">oai_citation:19‡scriptorium.com</a> <a href="https://www.scriptorium.com/2024/01/tips-for-moving-from-unstructured-to-structured-content/#:~:text=conversion%20matrix%2C%20you%E2%80%99re%20more%20confident,where%20the%20conversion%20didn%E2%80%99t%20work">oai_citation:20‡scriptorium.com</a>. Use the pilot to measure how much manual cleanup was needed and update your automation or guidelines to address those issues. Only once the pilot output is satisfactory (or at least understood with clear steps to improve), proceed to full-scale extraction and transformation. </p>
+</li>
+</ol>
+<p>By the end of the planning stage, you should have a well-defined roadmap of the conversion process, a set of mapping rules or a conversion stylesheet in development, and confidence in the tools you’ll be using. This preparation sets a solid foundation for the detailed work of extraction and transformation that follows.</p>
+<h2 id="extracting-unstructured-source-content">Extracting Unstructured Source Content<a class="headerlink" href="#extracting-unstructured-source-content" title="Permanent link">&para;</a></h2>
+<p>The <strong>Extraction phase</strong> of the ETL pipeline deals with pulling content out of its current form so it can be processed. Depending on the source, extraction can range from straightforward file conversions to complex data retrieval tasks. The main goal is to get the raw content (text, images, metadata) into a format that you can feed into the transformation step. Key considerations during extraction:</p>
+<ul>
+<li>
+<p><strong>Choose an Extraction Method Suitable for the Source:</strong> Tailor your approach to the type of unstructured data you have. If the source is in <strong>binary document formats</strong> like Microsoft Word, FrameMaker, or InDesign, you may use the application’s export features or third-party converters. For instance, Word documents can be saved as XML or HTML; FrameMaker files can be saved to MIF or HTML with conversion tables <a href="https://blog.oxygenxml.com/topics/migratingFmToDita.html#:~:text=Using%20FrameMaker%20Conversion%20Table">oai_citation:21‡blog.oxygenxml.com</a> <a href="https://blog.oxygenxml.com/topics/migratingFmToDita.html#:~:text=Publish%20Your%20Unstructured%20FrameMaker%20to,HTML">oai_citation:22‡blog.oxygenxml.com</a>. If dealing with <strong>HTML or Markdown files</strong>, you might not need a conversion to another format – the HTML can be parsed directly. For <strong>PDFs</strong> or other formats without source files, consider using OCR or PDF-to-text extraction tools, though these may lose structure and require more manual cleanup. In some cases, extraction involves <strong>web scraping or API calls</strong> – for example, if content resides in a legacy web knowledge base or a database, you might write a script to fetch articles via an API or scrape HTML off web pages <a href="https://www.lonti.com/blog/etl-for-unstructured-data-navigating-the-complexity#:~:text=Web%20Scraping">oai_citation:23‡lonti.com</a> <a href="https://www.lonti.com/blog/etl-for-unstructured-data-navigating-the-complexity#:~:text=API%20Calls">oai_citation:24‡lonti.com</a>. The method you choose should preserve as much of the original content structure as possible (headings, lists, tables, etc.), since that will aid in mapping to DITA.</p>
+</li>
+<li>
+<p><strong>Retain or Capture Metadata:</strong> If the source content has metadata (like document title, author, version, product name, or keywords), ensure your extraction process captures that information. You’ll likely want to map some of this metadata into DITA’s <code>&lt;prolog&gt;</code> (e.g., <code>&lt;author&gt;</code> elements, <code>&lt;keywords&gt;</code>, or metadata attributes) during transformation. Some metadata may not be explicit; for example, a section of a Word doc might implicitly be for a certain product version. If possible, <strong>add markers or notes</strong> during extraction to flag such information (or produce a metadata file alongside the content). For instance, if extracting from a file system, the folder structure or file naming might indicate product or language – record that so it can be applied in DITA later.</p>
+</li>
+<li>
+<p><strong>Normalize Formats for Transformation:</strong> It often helps to convert various source formats to a <strong>common interim format</strong> for easier processing. Many teams use HTML or XML as an intermediate. For example, unstructured FrameMaker content could be converted to HTML first (FrameMaker’s HTML output or via MIF2Go) and then that HTML is converted to DITA. Similarly, one approach for Word is to save as <strong>DocBook XML</strong> or HTML, then transform to DITA <a href="https://www.bobdc.com/blog/converting-word-documents-to-d/#:~:text=I%20recently%20had%20to%20convert,the%20DITA%20files%20by%20hand">oai_citation:25‡bobdc.com</a>. The interim format should be something your transformation tools can parse easily (XML is ideal). In cases where you have multiple input formats (say Word and HTML and maybe plain text), you might convert them all to a simplified XHTML markup before the DITA conversion. This normalization simplifies your pipeline – you then write one set of rules for XHTML-to-DITA, for example. If a commercial conversion tool is used, it might handle multiple input formats internally and output DITA directly (for instance, some CCMS or conversion engines can ingest Word or Excel and output DITA).</p>
+</li>
+<li>
+<p><strong>Automate Where Possible:</strong> Use scripts or batch processes to perform extraction in bulk. For example, if using OpenOffice or LibreOffice to convert Word to HTML/XML, you can script it or use a macro for multiple files. If using an API (like a CMS export), you can write a script to pull all items automatically. Automation reduces human error and speeds up the pipeline. Monitor the extraction results for any errors – for instance, ensure all files were processed, images were exported, etc. </p>
+</li>
+<li>
+<p><strong>Handle Binary Assets (Images and Media):</strong> Extraction isn’t just about text. Ensure that embedded images, diagrams, or other media in the source are extracted as separate files. For Word, saving as HTML typically extracts images to separate files (usually PNG or JPEG) which you can later link in DITA. For FrameMaker, the MIF -&gt; HTML approach will also yield image files. Sometimes, embedded objects (like drawings or charts) can be tricky – they may need to be manually saved out or converted (one tip: shapes in Word might not export; a workaround is converting them to images or SVG manually before extraction <a href="https://help.adobe.com/en_US/framemaker/using/using-framemaker/user-guide/frm_structauth_sa-convert-word-to-dita.html#:~:text=Ensure%20that%20your%20document%20starts,Heading%202%2C%20and%20so%20on">oai_citation:26‡help.adobe.com</a>). Keep all extracted media organized, ideally with references to where they came from so you can reinsert them into the correct place in the DITA topics. </p>
+</li>
+<li>
+<p><strong>Quality Checks at Extraction:</strong> After extraction, do a quick quality check on the raw output. Open a few of the HTML/XML files to ensure the content is complete (no missing sections) and that special characters are preserved correctly (no garbled text). If the extraction process involves a lot of custom code, verify counts (e.g., if you had 100 source files, did you get 100 outputs? Do all images in the source appear in the output, etc.). Address any extraction issues now (for example, if certain formatting didn’t carry over, you might need to adjust the extraction method or plan to handle it in transformation).</p>
+</li>
+</ul>
+<p>By the end of the extraction phase, you should have your source content in a form suitable for conversion: a set of intermediate files (like HTML, XML, or even the original format if your transformer can read it directly) along with all necessary assets and metadata. This “staging area” is what you will feed into the transformation process to create DITA content.</p>
+<h2 id="transforming-content-to-dita">Transforming Content to DITA<a class="headerlink" href="#transforming-content-to-dita" title="Permanent link">&para;</a></h2>
+<p>The <strong>Transformation phase</strong> is the core of the pipeline, where the content’s format and structure are converted from the raw extracted form into well-structured DITA XML. This is where you apply the mapping rules and tagging guidelines developed during planning. Given its importance, this phase typically involves the most effort and iteration. Below are the key steps and best practices for the transformation phase:</p>
+<p><strong>1. Prepare the DITA Framework:</strong> Before converting content, ensure you have the DITA environment set up. This includes having the DITA DTDs or schemas available (for validation), and any specialization or custom DITA document type configured if you decided to use one. You might also establish templates for DITA topics if certain standard content (boilerplate or metadata) needs to be included. If your CCMS requires any specific folder structures or manifest files for DITA imports, set those up now. In many cases, the standard DITA types (Concept, Task, Reference, etc.) will be sufficient. </p>
+<p><strong>2. Map Source Elements to DITA Elements:</strong> Using the mapping rules from your strategy, implement the logic to convert elements. For example, if you have HTML as the intermediate, you might use XSLT (Extensible Stylesheet Language Transformations) or a scripting library (like Python with XML parsing) to transform <code>&lt;h1&gt;</code> into a DITA <code>&lt;title&gt;</code> inside a new <code>&lt;concept&gt;</code> or <code>&lt;task&gt;</code> topic. Define how you will recognize topic boundaries – often a top-level heading (e.g., <code>&lt;h1&gt;</code>) indicates the start of a new topic. You might create a new DITA topic file for each such heading, and treat lower-level headings as sections or subsections within the topic <a href="https://www.stilo.com/2023/07/12/how-to-convert-structured-and-unstructured-content-to-dita-xml/#:~:text=5,the%20defined%20tagging%20guidelines%20and">oai_citation:27‡stilo.com</a>. Decide how to differentiate DITA <em>topic types</em>: for instance, maybe any topic that contains procedural steps (a numbered sequence) should be a <code>&lt;task&gt;</code> topic, whereas more descriptive sections become <code>&lt;concept&gt;</code> topics. Some decisions might be content-specific – e.g., a document titled "Installation" might logically become a <code>&lt;task&gt;</code> (procedure). These mappings can be coded in an XSLT or a conversion script. At this stage, also map <em>inline elements</em>: bold or italic text in the source might map to <code>&lt;b&gt;</code> or <code>&lt;i&gt;</code> in DITA <em>if they are purely formatting</em>. But if they have semantic meaning (e.g., bold indicates a UI control or a term), consider mapping to <code>&lt;uicontrol&gt;</code> or <code>&lt;ph&gt;</code> or other appropriate DITA inline elements. This ensures you’re not just styling text, but capturing meaning when possible.</p>
+<p><strong>3. Apply Consistent Tagging Guidelines:</strong> Consistency is key for a successful conversion. Establish and follow <strong>tagging guidelines</strong> so that all content is labeled uniformly <a href="https://www.stilo.com/2023/07/12/how-to-convert-structured-and-unstructured-content-to-dita-xml/#:~:text=6,XML%20structure%20and%20tagging%20guidelines">oai_citation:28‡stilo.com</a>. For example, if one list is converted as a DITA ordered list <code>&lt;ol&gt;</code> with list items <code>&lt;li&gt;</code>, ensure all lists follow that pattern unless there is a clear reason to use an alternate structure (like a DITA <code>&lt;steps&gt;</code> element for procedural steps inside a task). Define how to tag things like tables (use <code>&lt;table&gt;</code> or <code>&lt;simpletable&gt;</code>), notes (<code>&lt;note&gt;</code> with appropriate @type attributes), code samples (<code>&lt;codeblock&gt;</code>), and so on. If the source had certain admonitions (note, tip, warning), map them to <code>&lt;note type="note"&gt;</code>, <code>&lt;note type="tip"&gt;</code>, <code>&lt;note type="warning"&gt;</code> respectively, for example. Tagging guidelines should also cover how to handle cross-references: e.g., source hyperlinks or “see page 10” text. In DITA, cross-references are done with <code>&lt;xref&gt;</code> elements (or within maps using relationship tables for linking topics). You might decide to convert inline links to DITA <code>&lt;xref&gt;</code> that point to the appropriate new topic (resolving them if possible during transformation). In some cases, it’s better to remove inline links and instead use DITA’s related-links section or relationship tables to manage links for easier maintenance <a href="https://www.scriptorium.com/2020/07/dita-migration-strategies/#:~:text=other%20documents%20or%20document%20sections,rewriting%20before%20or%20after%20you">oai_citation:29‡scriptorium.com</a>. The guideline might be: “Any link that was in running text in the source will be moved to a ‘Related Topics’ list at the end of the topic.” Whatever you choose, do it uniformly. Document these guidelines and perhaps incorporate checks for them (for instance, a transformation script can flag if an unexpected style or tag is encountered, so you can decide how to handle it consistently).</p>
+<p><strong>4. Implement the Automated Conversion:</strong> With mappings and guidelines, proceed to convert the content. This could involve writing an XSLT stylesheet if your source is XML/HTML. For example, you might have an XSLT template that matches the root of each source file, creates a <code>&lt;dita&gt;</code> or appropriate DITA topic element, and then processes children, mapping them to DITA elements according to your rules. Alternatively, you might use a scripting approach: read the source with a parser (like Python’s BeautifulSoup or lxml for HTML, or a DOM parser for XML), then programmatically create DITA XML output. If you are using a conversion tool or CCMS built-in converter, this step might be configuring and running that tool (e.g., configuring an <strong>Adobe AEM Guides</strong> or <strong>Heretto</strong> conversion workflow, or using <strong>Oxygen XML Editor’s Batch Converter</strong> with certain settings). For example, Oxygen’s Batch Converter can transform HTML to DITA and allows options like treating certain heading levels as separate topics <a href="https://blog.oxygenxml.com/topics/migratingFmToDita.html#:~:text=The%20Batch%20Documents%20Converter%20add,the%20document%2C%20do%20the%20following">oai_citation:30‡blog.oxygenxml.com</a> <a href="https://blog.oxygenxml.com/topics/migratingFmToDita.html#:~:text=option%20is%20selected%20,option%20is%20also%20selected%3A%20Image">oai_citation:31‡blog.oxygenxml.com</a>. Ensure that your tool or script is set to output valid DITA (correct nesting, required elements included like <code>&lt;title&gt;</code> in each topic, etc.). Run the conversion on the content (starting with your pilot files if you haven’t already). This process will produce DITA <strong>topic files</strong> (usually with <code>.dita</code> or <code>.xml</code> extension) and possibly DITA <strong>map files</strong>. If your converter doesn’t automatically create a DITA map for a collection, you might need to generate the maps yourself. A DITA map is an XML file that acts as a container for topics (like a table of contents). Often you can generate a map by taking the structure of the original document (e.g., the top-level file or book) and listing the converted topics in hierarchical order. Some tools create the map for you if the source had an identifiable structure (e.g., a Word master document or a FrameMaker book).</p>
+<div class="highlight"><pre><span></span><code>*Example: A legacy Word document being transformed into DITA.* The above image illustrates the essence of this conversion – the source (Word) is being converted into the DITA format (as indicated by the arrow pointing to the DITA logo). In practice, this means the content and structure from the Word file are now represented in DITA XML tags. During transformation, each major section in Word might become a standalone DITA topic, and the relationships between sections become links or map hierarchy. The result of running the automated conversion is a set of DITA topics that correspond to the source content, now marked up semantically according to DITA standards.
+</code></pre></div>
+<ul>
+<li><strong>Handle Special Elements and Edge Cases:</strong> Certain content elements often need special handling during transformation:</li>
+<li><strong>Images:</strong> Ensure that image references in the source are converted to DITA <code>&lt;image&gt;</code> elements with proper references to the image files. If your extraction provided image files, your transformation should replace any placeholder or original tags (like <code>&lt;img src="..."&gt; in HTML) with</code><image href="filename.png"/><code>in DITA, and possibly add an</code><alt><code>text if available (or you might populate the</code>alt` from figure captions). If images had captions in the source, decide whether to convert those to a title for the image or a separate paragraph. Also, remember DITA may store images separately in the map or topics depending on your design.  </li>
+<li><strong>Links and Cross-References:</strong> As mentioned, decide between inline <code>&lt;xref&gt;</code> versus using the map’s structure or related links. If the source referenced other documents (e.g., “See <em>Guide B</em> for more info”), after migration those likely become links to other DITA topics or are left as text to be handled manually. A good practice is to output any unresolved references in a noticeable way (maybe as a comment or a placeholder text in the DITA) so you can fix them post-conversion.  </li>
+<li><strong>Reused Content:</strong> If during planning you identified reusable chunks (e.g., identical disclaimer text in many files), you have options: you could convert them as separate topics and then in each place include a reference (a conref or content reference in DITA) to that topic. However, automating conref creation can be complex. Another approach is to convert everything literally and then manually consolidate duplicates in DITA after the fact. Ideally, though, if your analysis found clear reuse candidates, you might write the converter to recognize them (perhaps via unique IDs or text matching) and produce one copy. This might be outside the initial automation’s scope, and instead handled in a post-processing script or manually. The Scriptorium strategy suggests <em>identifying reuse before migration and converting that content only once</em>, rather than duplicating it in every file <a href="https://www.scriptorium.com/2020/07/dita-migration-strategies/#:~:text=When%20you%20evaluate%20which%20content,Introductory%20Info%20topic%20only%20once">oai_citation:32‡scriptorium.com</a>. This is an advanced step – it requires confidence that two pieces of text are truly meant to be the same content. When done right, it greatly reduces redundancy in your final DITA corpus.</li>
+<li><strong>Conditional text / Filtering:</strong> Many unstructured docs have conditional content (like “if product = X, show this text”). If such logic exists in source (maybe as color-coded text or conditional tags in FrameMaker or Word), plan how to represent it in DITA (probably using DITA’s filtering attributes like @product or @audience on elements). The transformation should set those attributes accordingly, which might require exporting or marking those conditions in the source extraction.</li>
+<li><strong>Complex Structures:</strong> Tables, especially complex nested tables or ones with merged cells, might not cleanly convert. You may need to simplify them or use the <code>&lt;table&gt;</code> element instead of <code>&lt;simpletable&gt;</code> for more complex needs. Test a few to ensure your converter isn’t losing data.  </li>
+<li><strong>Menus, GUI elements, etc.:</strong> If converting software documentation, you might have sequences like <em>File &gt; Save As</em> in the text. Consider converting such UI step sequences to <code>&lt;uicontrol&gt;</code> elements for each part and <code>&lt;menucascade&gt;</code> for the sequence, which is the semantically correct DITA markup. This may be beyond automated detection unless the source clearly marks them (maybe by a style). If the source italicized or quoted menu names consistently, you could map that style to <code>&lt;uicontrol&gt;</code>. This is an example of adding semantic richness: the output becomes more meaningful than the source by explicitly tagging UI controls.</li>
+</ul>
+<p>Throughout the transformation coding, <strong>iterate and test frequently</strong>. Convert a single document and validate it. Use a DITA-aware editor or the DITA Open Toolkit (DITA-OT) to validate that the produced DITA files are well-formed and adhere to the DITA schema. If the conversion is largely automated but you know some portions can’t be decided by rules, you might insert comments or markers for manual follow-up. For example, if a tool isn’t sure whether a heading should start a new topic or remain in the same, it might keep it in the same topic but add a comment <code>&lt;!-- Check if this should be split into a new topic --&gt;</code>. These markers can guide manual cleanup later.</p>
+<p><strong>5. Validate the Converted DITA:</strong> Once the automated transformation runs, you should have a set of DITA files. <strong>Validation</strong> is critical at this stage. Use an XML validator or a DITA tool to check each file for compliance with the DITA standard <a href="https://www.stilo.com/2023/07/12/how-to-convert-structured-and-unstructured-content-to-dita-xml/#:~:text=tagging%20guidelines,identifying%20opportunities%20for%20content%20reuse">oai_citation:33‡stilo.com</a>. Fix any systematic errors by adjusting the transformation rules and rerunning it. Common validation issues include: missing required elements (like a topic with no title), invalid attribute values, or improperly nested tags. It’s easier to fix these issues by tweaking the conversion logic and re-running, rather than editing files one by one, especially if many files are affected. So treat the first conversion as a test run, refine the converter, and run it again until the output is consistently valid.</p>
+<p><strong>6. Load into CCMS Structure:</strong> (This overlaps with the next section, but it can be part of the transformation if you need to produce certain output structure.) Ensure that the folder organization of topics and maps makes sense for your CCMS. You might have transformation steps that organize output files into directories (for example, one folder per manual with its topics inside, plus a DITAMAP). Some CCMSs might prefer each topic individually imported and then a map to assemble them. Structure your output accordingly now so that the load will be smoother.</p>
+<p><strong>7. Manual Adjustments and Enhancements:</strong> After automated conversion and validation, there will typically be some manual work to polish the content. Expect to do <strong>manual cleanup on a per-topic basis</strong> for things that automation couldn’t handle. Examples:
+   - Fixing awkward line breaks or leftover artifacts (e.g., if the source had line breaks in the middle of paragraphs, you might see unnecessary <code>&lt;lb&gt;</code> or split paragraphs).
+   - Adjusting topic breaks if the automation split or merged incorrectly.
+   - Improving titles (sometimes the first heading becomes the title, but maybe it included numbering or was in all caps; you might want to clean that).
+   - Removing any empty elements that were artifacts of formatting. A classic example: Word users often add extra empty paragraphs for spacing; these may have converted into empty <code>&lt;p&gt;</code> tags in DITA. You can remove these either via a script or find-and-delete in an editor <a href="https://www.bobdc.com/blog/converting-word-documents-to-d/#:~:text=Typical%20Word%20users%20add%20space,replace%20in%20a%20text%20editor">oai_citation:34‡bobdc.com</a>.
+   - Checking list formatting – ensure that lists that were meant to be bulleted vs numbered are correctly represented. (One might find some bullets turned into numbers or vice versa due to conversion; fix those to match original intent <a href="https://www.bobdc.com/blog/converting-word-documents-to-d/#:~:text=On%20the%20down%20side%2C%20some,row%2C%20all%20but%20one%20got">oai_citation:35‡bobdc.com</a>.)
+   - Ensuring all cross-references resolve to actual DITA targets. If some links were not auto-converted (e.g., references to external docs), you might now convert them to either external links or point to the new DITA equivalents if those docs also converted.
+   - Adding additional semantic tagging that automation missed. For instance, if you see a term that should be a glossary term or a <code>&lt;keyword&gt;</code>, you might tag it. Or if you see a phrase like "Click <strong>Save</strong>", ensure <strong>Save</strong> is wrapped in <code>&lt;uicontrol&gt;Save&lt;/uicontrol&gt;</code>.</p>
+<p>The transformation phase is considered complete when all content exists as DITA-compliant XML, representing the original information <em>with equivalent or improved structure and meaning</em>. You have moved the content from unstructured to structured form. The next step is to take these DITA files and integrate them into the CCMS.</p>
+<h2 id="loading-content-into-the-ccms">Loading Content into the CCMS<a class="headerlink" href="#loading-content-into-the-ccms" title="Permanent link">&para;</a></h2>
+<p>After transforming the content into DITA XML, the final step of the pipeline is <strong>Loading</strong> it into your Component Content Management System. The CCMS will serve as the repository for all these new DITA topics and maps, enabling the documentation team to further manage and publish the content. Loading is typically more straightforward than the transformation step, but it still requires care to maintain the structure and linkages established. Here’s how to proceed with the loading phase:</p>
+<ul>
+<li>
+<p><strong>Preparation for Import:</strong> Organize your DITA files (topics, maps, images, and other assets) in a clear folder structure if not already done. This structure might mirror how you want them in the CCMS (though many CCMS allow moving files around after import too). Verify that all references in the DITA files are using correct paths or keys. For example, image references <code>&lt;image href="images/fig1.png"/&gt;</code> should correctly point to the images’ location relative to the topics. If your CCMS uses a managed database rather than a file system, you might not worry about folder paths, but ensure relationships like map-to-topic references and conrefs are correct within the files.</p>
+</li>
+<li>
+<p><strong>Import Process:</strong> Use the CCMS’s import tools or APIs to bring in the DITA content. Many CCMS platforms (e.g., Adobe Experience Manager Guides, Vasont, Astoria, Heretto, etc.) have a bulk import feature where you can upload a zip of DITA content or point to a folder. During import, the system will parse the DITA files, store each topic as a modular component, and preserve the hierarchy via the DITA maps. Monitor the import for any errors – for instance, if a topic isn’t well-formed, the CCMS might reject it, which would indicate something missed in validation. Ideally, do a test import with a small batch first (like the pilot topics) to ensure the CCMS settings (like DITA version or specialization support) are correct. If the CCMS requires any specific metadata on import (like specifying the document type or setting a root map), make sure to provide that. For example, you might need to designate a top-level DITAMAP as the “map” object in the CCMS so it knows the publication structure.</p>
+</li>
+<li>
+<p><strong>Verify Structure in CCMS:</strong> Once imported, navigate through the content in the CCMS interface. Check that the topic hierarchy (parent/child relationships) matches what you expect. Often, the DITA map will be represented in the CCMS as a hierarchy of topics. Ensure images are stored and linked properly (the CCMS might store them as media objects and the topics reference them; open a topic that has images to see if they display correctly). Also check that cross-topic links (xrefs or related links) are pointing to the right targets, now that topics have new IDs in the system. If your CCMS uses keys or content references, you might need to update key definitions or ensure the conref source topics were loaded prior to the referencing topics.</p>
+</li>
+<li>
+<p><strong>Apply Metadata and Assignments:</strong> In a CCMS, you may want to set metadata on the imported topics for workflow or filtering purposes. For example, tag each topic with product name, version, or owner. Some of this could have been embedded in the DITA content already (in the <code>&lt;prolog&gt;</code>), but you might need to map that to CCMS-specific metadata fields. The semantic richness we preserved during conversion can now feed into the CCMS’s capabilities – for instance, if topics have an audience attribute or product attribute, ensure the CCMS is aware so it can be used in publishing filters. Additionally, assign topics to writers or teams if your workflow requires it, and set up any needed link management (like if using relationship tables, confirm they imported as expected).</p>
+</li>
+<li>
+<p><strong>Regenerate Outputs via CCMS:</strong> A good test of a successful load is to generate a publish output from the CCMS (or using the DITA Open Toolkit outside it) based on the imported DITA map. Produce a sample PDF or HTML output of the content from the CCMS. This serves two purposes: it checks that the content is properly formed and all pieces (topics, images, links) come together, and it lets you see how the new structured content looks in a user-facing format. Compare this output to the original source’s output (if available, e.g., an original PDF of the manual) to ensure nothing critical is missing. There might be differences in formatting due to new templates, but the informational content should be equivalent or improved. This publishing test might also highlight any overlooked conversion issues (for example, if a certain topic wasn’t included in the map due to a broken link, it will show up as missing content in output).</p>
+</li>
+<li>
+<p><strong>Backup and Version Control:</strong> After a successful import, consider this initial content load as a baseline version in the CCMS. It’s wise to tag this version (maybe as “imported draft” or similar) so that any future changes by authors can be distinguished from issues introduced during migration. Keep the original pre-import DITA files archived as well, in case you need to re-import or reference them outside the CCMS.</p>
+</li>
+</ul>
+<p>By completing the load phase, your unstructured content has now been fully ingested into the structured CCMS environment. The documentation team can now use the CCMS to maintain and publish the content moving forward, leveraging the benefits of the structured DITA format.</p>
+<h2 id="quality-assurance-and-validation">Quality Assurance and Validation<a class="headerlink" href="#quality-assurance-and-validation" title="Permanent link">&para;</a></h2>
+<p>Even after careful planning and automated conversion, <strong>Quality Assurance (QA)</strong> is an indispensable step. QA ensures that the migrated DITA content accurately reflects the source material’s information and that the structured content is error-free and useful. QA should be performed before and after loading into the CCMS. Here are the QA activities to conduct:</p>
+<ul>
+<li>
+<p><strong>Content Fidelity Check:</strong> Verify that all content from the source made it into the DITA topics. A reliable method is to do a <strong>side-by-side comparison</strong> of a sample of topics against the original documents. For instance, if you have the original manual in PDF and now a PDF generated from DITA, compare them section by section. Look for any missing paragraphs, list items, or tables. One conversion expert strongly recommends <em>skimming the original file and the new output to do a block-by-block comparison – this QA step is worth the effort for important content</em> <a href="https://www.bobdc.com/blog/converting-word-documents-to-d/#:~:text=On%20the%20down%20side%2C%20some,row%2C%20all%20but%20one%20got">oai_citation:36‡bobdc.com</a>. If you find inconsistencies (say a paragraph that was present in Word is missing in DITA), track down whether it was an extraction issue (missed in source export) or a transformation issue (maybe filtered out or lost due to a bug in conversion). Then fix accordingly (you might need to adjust your conversion and re-run, or if it’s isolated, manually insert the missing content).</p>
+</li>
+<li>
+<p><strong>Structure and Semantics Check:</strong> Evaluate if the new structure makes sense. Are topics appropriately broken up? For example, did extremely long topics get created that should be split? Ensure that each DITA topic has a clear purpose (concept, task, etc.) and that within topics, the hierarchy of sections is logical. Also, confirm that semantic tags are used correctly – check a few examples like steps in a procedure to ensure they’re within <code>&lt;task&gt;&lt;steps&gt;</code> structures, or that notes are inside <code>&lt;note&gt;</code> elements, etc. If semantic tagging was inconsistent, consider a cleanup pass: you might run additional scripts to standardize certain patterns or just have a writer review and normalize. The goal is that the content is not only present, but also organized and marked up in a way that a reader (and the CCMS or output generators) will interpret correctly.</p>
+</li>
+<li>
+<p><strong>Validation and Link Testing:</strong> Re-run a <strong>DITA validation</strong> on the final content if possible, especially if manual edits were made. This ensures no well-formedness errors or invalid markup slipped in. Additionally, test all <strong>links</strong> and cross-references in the content. Most CCMS or DITA editors have a link validation utility to find broken xrefs. Fix any broken links by pointing them to the correct target or removing if irrelevant. Check that images are displaying and their references are correct. If using conrefs or keyrefs (transcluded content or keys), verify that those resolve properly in the CCMS and published outputs.</p>
+</li>
+<li>
+<p><strong>Review Output in Multiple Formats:</strong> Generate outputs (like HTML, PDF, maybe online help) from the DITA content and have subject matter experts or writers review them. They should look not only for missing content, but also formatting or numbering issues (like numbering of steps reset incorrectly, or list indentation off – these could be clues to structural tagging issues). For example, if a step list is not rendering numbers, perhaps the <code>&lt;steps&gt;</code> structure was incorrect in DITA. These reviews can uncover subtle mistakes that purely comparing text might miss.</p>
+</li>
+<li>
+<p><strong>User Acceptance Testing:</strong> Since this project ultimately serves content owners and readers, it may be beneficial to have the original content owners (the writers or teams who created the source content) review the converted content in the CCMS. They can check if everything they expect is there and if the intent of the content is preserved. Because they know the content intimately, they might catch if something reads oddly due to conversion or if any meaning was altered. Encourage them to focus on correctness and completeness of information. Any feedback from them can guide final adjustments.</p>
+</li>
+<li>
+<p><strong>Iterate and Fix:</strong> Treat QA findings systematically. If one type of error is found in one topic, search across all topics for similar issues. For example, if you find that in one topic all bullet lists became numbered lists incorrectly, likely the whole set has that issue; you can then correct that via a batch process or script across all topics (or adjust the conversion and reconvert those pieces). It’s more efficient than fixing item by item. However, if the content set is already loaded in the CCMS and minor fixes are needed, it might be acceptable to fix them manually in the CCMS interface if they are not too widespread. For larger pattern issues, considering doing another conversion run or writing a script within the CCMS (if it supports that) to do the fixes is worthwhile.</p>
+</li>
+<li>
+<p><strong>Performance and Scale Check:</strong> If the volume of content is huge, ensure the CCMS handles it well. This is more of a system check, but for example, if thousands of topics were imported, test search, navigation, or any build processes to ensure there are no performance bottlenecks or memory issues. Sometimes structuring content differently (like splitting a giant map into submaps) can help performance. This is a peripheral consideration, but part of QA in a large migration is ensuring the content is structured in a way that the tools and processes can manage at scale.</p>
+</li>
+</ul>
+<p>QA is complete when you have high confidence that the structured DITA content is an accurate and enhanced representation of the source. Remember, it’s acceptable that some aspects differ (for example, page breaks or certain formatting might not be identical) as long as the information and its organization are correct and user-friendly. The outcome of QA might be an official sign-off from content owners that the migrated content is ready for use.</p>
+<h2 id="best-practices-and-tips-for-successful-migration">Best Practices and Tips for Successful Migration<a class="headerlink" href="#best-practices-and-tips-for-successful-migration" title="Permanent link">&para;</a></h2>
+<p>Converting unstructured content to DITA can be complex, but over time, experienced teams have developed best practices that can save you trouble and improve results. Here are some key tips and best practices to keep in mind as you build and refine your ETL pipeline:</p>
+<ul>
+<li>
+<p><strong>Garbage In, Garbage Out – Clean the Source if Possible:</strong> The quality of the source content will greatly affect the conversion result. If you have the opportunity, clean up source documents <em>before</em> conversion. This might mean enforcing consistent use of styles in Word (e.g., make sure all headings truly use heading styles), removing deprecated or unused styles, fixing broken links, or eliminating obviously redundant content. The more consistent and structured the source, the easier it is to map to DITA. For example, if writers sometimes manually bolded headings instead of using Heading styles, those might be missed by an automated converter looking for <code>&lt;h1&gt;</code> tags. Fixing such issues in source will improve conversion fidelity.</p>
+</li>
+<li>
+<p><strong>Develop and Refine a Conversion Matrix:</strong> As mentioned earlier, maintain a <strong>mapping document</strong> that details how each source element or pattern converts to DITA. This serves as both a design document for your pipeline and a reference for anyone doing manual cleanup. It can also be used for training writers on how their content will be transformed. Keep this matrix updated as you encounter new patterns or edge cases during conversion. It will help ensure consistency. For instance, if you encounter a new style in a document (say “Example” style that was used to highlight a scenario), decide what DITA element best fits (maybe <code>&lt;example&gt;</code> or a <code>&lt;section role="example"&gt;</code>) and add that to the mapping rules so it’s handled uniformly across all docs.</p>
+</li>
+<li>
+<p><strong>Automate Repetitive Fixes:</strong> Whenever you find yourself fixing the same issue in multiple topics, consider writing a small script or using find-and-replace with regex to handle it. For example, removing all empty <code>&lt;p&gt;</code> tags or converting all occurrences of “Note:” at the start of a paragraph into a <code>&lt;note&gt;</code> element can be automated. Many XML editors allow running XPath or scripts over a project to do such batch fixes. This not only saves time but reduces human error.</p>
+</li>
+<li>
+<p><strong>Leverage Existing Tools and Frameworks:</strong> You’re not the first to do a DITA migration. There are tools and open source projects that can help. For example, the <strong>DITA-OT</strong> (DITA Open Toolkit) has had plugins for conversions (like the docbook to DITA plugin mentioned in Bob’s blog <a href="https://www.bobdc.com/blog/converting-word-documents-to-d/#:~:text=DocBook%20to%20DITA">oai_citation:37‡bobdc.com</a>). There are also frameworks like <strong>DITA-Exchange</strong> or <strong>DITA4Publishers</strong> for Word to DITA conversions <a href="http://www.dita4publishers.org/docs/repo/org.dita4publishers.word2dita/word2dita/word2dita-intro.html#:~:text=The%20Word,into%20DITA%20maps%20and%20topics">oai_citation:38‡dita4publishers.org</a>. Investigate if any align with your needs; even if you don’t use them directly, you can glean ideas or even code snippets. Commercial converters (Stilo Migrate, Adobe AEM conversion, etc.) can accelerate things if budget allows – sometimes using them for an initial bulk conversion and then doing custom fixes is a viable strategy. The Oxygen XML Editor’s <strong>batch conversion</strong> add-on was one such tool we referenced that can handle certain formats with configuration <a href="https://blog.oxygenxml.com/topics/migratingFmToDita.html#:~:text=The%20Batch%20Documents%20Converter%20add,the%20document%2C%20do%20the%20following">oai_citation:39‡blog.oxygenxml.com</a> <a href="https://blog.oxygenxml.com/topics/migratingFmToDita.html#:~:text=option%20is%20selected%20,option%20is%20also%20selected%3A%20Image">oai_citation:40‡blog.oxygenxml.com</a>.</p>
+</li>
+<li>
+<p><strong>Plan for Reusable Components:</strong> One of the big advantages of DITA/CCMS is content reuse. During migration, try to set up the content in a reuse-friendly way. This could mean creating <strong>library topics</strong> for content that you know appears in many places (like a common safety warning, or a product description) and then after conversion, replace the duplicates with conrefs to that library topic. It might not be fully automated, but even manually doing it for top repeated content can pay off. As Scriptorium noted, <em>ideally identify reuse before migration and convert that content only once</em> <a href="https://www.scriptorium.com/2020/07/dita-migration-strategies/#:~:text=When%20you%20evaluate%20which%20content,Introductory%20Info%20topic%20only%20once">oai_citation:41‡scriptorium.com</a>. That might involve some upfront analysis (perhaps writing a script to detect duplicate paragraphs). It’s extra work but post-migration your content set will be leaner and meaner, with less duplication.</p>
+</li>
+<li>
+<p><strong>Address Linking Strategy:</strong> Unstructured docs often use inline links (“see page X”, “refer to Y chapter”). These don’t translate one-to-one in a modular DITA world. Decide your linking strategy and apply it. A best practice is to avoid hardcoding too many inline links in topics; instead use relationship tables or related-links sections, which are easier to manage as content updates. For migration, you might extract all those “see X” references and decide whether to implement them as real links or transform them into cross-reference elements that the CCMS can track. Keep an eye on these during QA – broken or misdirected links can confuse users. The guideline from experts is to consider links <em>separate from body text</em> when possible, as a list of related topics is more manageable than scattered links in text <a href="https://www.scriptorium.com/2020/07/dita-migration-strategies/#:~:text=other%20documents%20or%20document%20sections,rewriting%20before%20or%20after%20you">oai_citation:42‡scriptorium.com</a>.</p>
+</li>
+<li>
+<p><strong>Image Best Practices:</strong> For images, prefer formats that work well with your publishing workflow (PNG, JPEG, SVG, etc.). If the source images were in older formats (BMPs or TIFFs), convert them to a web-friendly format during migration. Also, watch out for images containing text – they are problematic for localization and updates. If an image has labels or callouts, consider splitting those out: e.g., use numbered callouts on the image and have a table or list in DITA describing each callout (DITA has <code>&lt;dl&gt;</code> or definition list that can be used for callouts as well). This way, the text is stored as content, not baked into the image. The migration best practice is: <em>if images contain text, recreate that text in DITA content for reusability and translatability</em> <a href="https://www.scriptorium.com/2020/07/dita-migration-strategies/#:~:text=Transitioning%20your%20images%20to%20use,in%20various%20topics%20or%20languages">oai_citation:43‡scriptorium.com</a>. While you might not convert an image to a text schematic during migration automatically, flag these for manual recreation if they are important and will be translated often.</p>
+</li>
+<li>
+<p><strong>Maintain Version History and Traceability:</strong> If it’s important to trace back from a DITA topic to the original document and section it came from (for audit or review), consider keeping a mapping table or embedding a comment in the topic with the source reference. For example, in each topic’s <code>&lt;prolog&gt;&lt;author&gt;</code> or in a comment, note “Source: OldGuide.docx, Section 2.3”. This is helpful during the transition period in case someone questions a content change or wants to double-check something in the old format. It can be removed later once the migration is fully accepted.</p>
+</li>
+<li>
+<p><strong>Train and Empower the Team:</strong> A migration to structured content often comes with a cultural change for the documentation team. Ensure that the team (support staff and the writers who will maintain the DITA content) understand why certain decisions were made during migration (for example, why something became a separate topic or why a particular tag was used). Provide cheat sheets or training on the DITA model so that post-migration, they continue to apply the structured authoring principles. This prevents them from trying to “force” old unstructured habits into the new system (like inline formatting or duplicating content because they didn’t realize it’s reusable). A well-trained team will extend the value of the migration by using the CCMS and DITA effectively.</p>
+</li>
+<li>
+<p><strong>Iterate and Improve:</strong> Treat the first full round of migration as the baseline, not the final word. It’s rare that the initial conversion is perfect or the ideal structure for all use cases. Gather feedback after the content has been in use for a while. Maybe users find some topics too large and want them split, or the way something is tagged could be improved for consistency. Plan for a phase 2 where you implement these improvements across the content. Because the content is now in DITA, these changes should be easier to apply systematically than when it was in disparate unstructured files. Continuously improving the structure and semantics will further increase the content’s value over time.</p>
+</li>
+</ul>
+<p>By following these best practices, you’ll reduce the headache of migration and set up a robust pipeline that can be reused for future content conversion needs (for example, if new legacy docs need to be brought in, or updates from external sources). The goal is a maintainable, scalable content base – and learning from these tips will help achieve that.</p>
+<h2 id="conclusion-the-value-of-semantic-content">Conclusion: The Value of Semantic Content<a class="headerlink" href="#conclusion-the-value-of-semantic-content" title="Permanent link">&para;</a></h2>
+<p>Migrating unstructured content into DITA via a well-designed ETL pipeline is a significant undertaking, but it yields a powerful payoff: <strong>content that is richer in meaning, easier to manage, and more effective for end users.</strong> By following the steps in this manual – from careful planning, through extraction and transformation, to thorough QA – support staff can confidently transition legacy content into a structured format that aligns with modern content management best practices.</p>
+<p>In doing so, you aren’t just moving data from one system to another; you’re <strong>contributing to the semantic enrichment of the content.</strong> Every heading that became a DITA <code>&lt;title&gt;</code>, every bold note that became a structured <code>&lt;note&gt;</code>, and every piece of duplicated text that became a single reusable topic – all of these transformations add semantic value. This added value is precisely what content owners and readers ultimately benefit from:
+- <strong>For Content Owners (Authors and Organizations):</strong> They now have documentation that is modular and consistent. It’s easier to update one topic and have that change reflected everywhere it’s used, ensuring accuracy and saving time. The CCMS environment allows for better workflow (with version control, review processes, translations management, etc.) leveraging the structure of DITA. In a sense, the content becomes a <strong>business asset</strong> that can be repurposed for various needs – training materials, support articles, chatbots, printed manuals – all from the same source. The investment in structuring the content pays off in efficiency and scalability. As noted in an industry example, adopting structured content practices is an investment with an undeniable long-term payoff, creating a smarter and more efficient organization <a href="https://www.rws.com/blog/unlocking-organizational-knowledge/#:~:text=The%20lesson%20for%20other%20organizations,knowledgeable%20organization%20for%20the%20future">oai_citation:44‡rws.com</a>.</p>
+<ul>
+<li><strong>For Readers/End Users:</strong> They experience more coherent and reliable documentation. Structured content often means <strong>better navigation and search</strong> (since topics are smaller and more labeled, search can pinpoint relevant topics, and tables of contents are more logically organized). It also enables personalized content delivery; for example, users might filter documentation to their product model or see conditional notes relevant only to their configuration, thanks to attributes in DITA. Furthermore, consistent formatting and terminology (enforced by the structured templates) improve readability and comprehension. In short, users get the information they need more quickly and in a more digestible form. One source highlighted that with structured semantic tagging, content evolves from static information to an interactive instrument that truly engages users <a href="https://www.madcapsoftware.com/blog/content-management-dita/#:~:text=DITA%27s%20true%20potency%20lies%20in,usability%2C%20helping%20organizations%20customize%20delivery">oai_citation:45‡madcapsoftware.com</a> <a href="https://www.madcapsoftware.com/blog/content-management-dita/#:~:text=to%20suit%20their%20audience%27s%20specific,users%2C%20drives%20comprehension%2C%20and%20elevates">oai_citation:46‡madcapsoftware.com</a> – meaning users can trust the content more and even interact with it via modern tools (like asking questions to an AI that was trained on well-structured DITA content, getting accurate answers).</li>
+</ul>
+<p>Finally, completing this migration is also an achievement for the support staff and the organization’s content team. It modernizes the content operations. Going forward, new content can be authored in DITA natively, and the pipeline you’ve built can handle updates or even ingest other formats as needed. The semantic structures in place will facilitate future innovations, whether it’s integrating documentation into a customer support portal or enabling content to be part of a knowledge graph for advanced AI usage. </p>
+<p>In conclusion, this user manual has provided a comprehensive guide to converting unstructured or mixed content into structured DITA using an ETL pipeline. The approach is grounded in a philosophy that values semantic content and recognizes the essential role it plays in delivering value. By focusing on the “nuts and bolts” technical steps while keeping sight of the semantic goals, you as support engineers and content specialists ensure that the documentation not only moves to a new system, but truly improves in quality and utility. Structured content is an investment in the content’s future – and with the successful execution of this project, that future looks bright for both the content creators and the consumers of that information. Enjoy the benefits of your newly structured, semantically rich content repository!</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

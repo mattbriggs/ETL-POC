@@ -152,7 +152,15 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
-/site
+# site/ = markdown source (tracked), docs/ = built HTML for GitHub Pages (tracked)
+
+# virtual env
+
+#mac
+.mac/
+
+#Heretto
+.her/
 
 # mypy
 .mypy_cache/

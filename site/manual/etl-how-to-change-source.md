@@ -15,14 +15,7 @@
      treat_as_docx: [".docx"]
    ```
 
-2. The orchestrator determines which file types to ingest from that section:
-   ```python
-   for key, vals in getattr(cfg, "source_formats", {}).items():
-       if key.startswith("treat_as_"):
-           for v in vals:
-               if isinstance(v, str) and v.startswith("."):
-                   exts.append(v)
-   ```
+2. `Config.source_extensions()` (in `dita_etl/pipeline.py`) reads that section and collects all extensions.
 
 3. The **extract stage** automatically routes `.md`, `.html`, and `.docx` through their respective extractors:
    - `MdPandocExtractor`
@@ -55,7 +48,7 @@ source_formats:
 
 Then rerun:
 ```bash
-python3 scripts/cli.py --config config/config.yaml --input path/to/input
+dita-etl run --config config/config.yaml --input path/to/input
 ```
 
 
@@ -75,18 +68,9 @@ If you want to **convert Markdown ⇄ HTML** with the same system, you can:
 
 ### Advanced Option: Add a Format Switch Parameter
 
-You can even make the CLI dynamic.  
-In `cli.py`, add a flag:
+You can toggle the active source type by maintaining separate config files and passing the right one at runtime:
+
 ```bash
-python3 scripts/cli.py --config config/config.yaml --input ./input --format html
+dita-etl run --config config/html.yaml --input ./input
+dita-etl run --config config/markdown.yaml --input ./input
 ```
-
-Then, in `orchestrator.py`:
-```python
-if args.format == "html":
-    cfg.source_formats = {"treat_as_html": [".html", ".htm"]}
-elif args.format == "markdown":
-    cfg.source_formats = {"treat_as_markdown": [".md"]}
-```
-
-That way, you can toggle the mode without editing YAML.

@@ -13,6 +13,14 @@ artefacts to the output directory.
 | `output_dir` | `str` | Where to write assessment artefacts |
 | `config_path` | `str` | Path to `assess.yaml` |
 
+**Per-file routing:**
+
+| Extension | Sectionizer used |
+|---|---|
+| `.md` | `sectionize_markdown()` — heading-boundary split |
+| `.html`, `.htm` | `sectionize_html()` — regex-based HTML heading split |
+| anything else | `_assess_generic()` — placeholder scores |
+
 **Output artefacts:**
 
 | File | Description |
@@ -21,6 +29,9 @@ artefacts to the output directory.
 | `dedupe_map.json` | Near-duplicate cluster assignments |
 | `report.html` | Human-readable summary table |
 | `plans/<file>.conversion_plan.json` | Predicted topic types and chunking hints |
+
+The `plans/` directory path is passed to `TransformInput.plans_dir` so that
+Stage 2 can use the predicted `default_topic_type` during classification.
 
 ---
 
@@ -39,10 +50,11 @@ via a thread pool.
 | `DocxPandocExtractor` | `.docx` | Pandoc (`-f docx -t docbook`) |
 | `DocxOxygenExtractor` | `.docx` | Oxygen XML Editor scripts |
 
-Override the extractor for a specific extension via `config.yaml`:
+Configure parallel workers and extractor overrides via `config.yaml`:
 
 ```yaml
 extract:
+  max_workers: 4          # null = auto (CPUs × 2)
   handler_overrides:
     ".docx": "oxygen-docx"
 ```
@@ -56,14 +68,19 @@ extract:
 Reads each intermediate DocBook XML file, classifies it into a DITA topic
 type, and writes a minimal valid DITA topic file.
 
-Classification priority:
+Classification uses five sources evaluated in priority order:
 
-1. `classification_rules.by_filename` — glob pattern match against the
-   source filename.
-2. `classification_rules.by_content` — regex search against the DocBook
-   text.
-3. Built-in heuristics — keyword frequency (`click`, `run`, `parameters`…).
-4. Default → `concept`.
+| Priority | Source | Notes |
+|---|---|---|
+| 1 | `classification_rules.by_filename` | Glob pattern matched against the source file stem |
+| 2 | `classification_rules.by_content` | Regex searched against the full DocBook text |
+| 3 | Assess-stage plan hint | `default_topic_type` from `plans/<file>.conversion_plan.json` |
+| 4 | Built-in heuristics | Keyword frequency (`click`, `run`, `parameters`…) |
+| 5 | Default | `concept` |
+
+The plan hint (priority 3) is loaded from `TransformInput.plans_dir` — set
+automatically when running through `run_pipeline()`. An invalid or absent
+plan falls through gracefully to the heuristics.
 
 ---
 

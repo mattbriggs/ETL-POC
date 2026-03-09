@@ -17,6 +17,7 @@
     options:
       members:
         - sectionize_markdown
+        - sectionize_html
         - heading_ladder_valid
 
 ## features

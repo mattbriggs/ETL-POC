@@ -9,6 +9,7 @@ from dita_etl.config import (
     Config,
     Chunking,
     DITAOutput,
+    ExtractConfig,
     Tooling,
 )
 
@@ -113,3 +114,156 @@ class TestSourceExtensions:
         exts = cfg.source_extensions()
         # Default source_formats has treat_as_markdown: [".md"]
         assert ".md" in exts
+
+
+class TestExtractConfig:
+    def test_defaults(self, tmp_path):
+        path = _write_yaml(tmp_path, "")
+        cfg = Config.load(path)
+        assert isinstance(cfg.extract, ExtractConfig)
+        assert cfg.extract.handler_overrides == {}
+        assert cfg.extract.max_workers is None
+
+    def test_load_extract_section(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            extract:
+              max_workers: 4
+              handler_overrides:
+                .docx: oxygen-docx
+            """,
+        )
+        cfg = Config.load(path)
+        assert cfg.extract.max_workers == 4
+        assert cfg.extract.handler_overrides == {".docx": "oxygen-docx"}
+
+    def test_extract_max_workers_none(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            extract:
+              handler_overrides: {}
+            """,
+        )
+        cfg = Config.load(path)
+        assert cfg.extract.max_workers is None
+
+
+class TestDocstringExample:
+    def test_load_verbatim_module_docstring_yaml(self, tmp_path):
+        # Verbatim YAML from the config.py module docstring.
+        path = _write_yaml(
+            tmp_path,
+            """\
+            tooling:
+              pandoc_path: /usr/local/bin/pandoc
+              java_path: /usr/bin/java
+              saxon_jar: /opt/saxon/saxon9he.jar
+
+            source_formats:
+              treat_as_html: [".html", ".htm"]
+
+            extract:
+              max_workers: 4
+              handler_overrides:
+                ".docx": "oxygen-docx"
+
+            dita_output:
+              output_folder: build/out
+              map_title: "My Documentation Set"
+
+            classification_rules:
+              by_filename:
+                - match: "index"
+                  type: "concept"
+              by_content:
+                - match: "procedure"
+                  type: "task"
+            """,
+        )
+        cfg = Config.load(path)
+        assert cfg.tooling.pandoc_path == "/usr/local/bin/pandoc"
+        assert cfg.tooling.java_path == "/usr/bin/java"
+        assert cfg.tooling.saxon_jar == "/opt/saxon/saxon9he.jar"
+        assert cfg.extract.max_workers == 4
+        assert cfg.extract.handler_overrides == {".docx": "oxygen-docx"}
+        assert cfg.dita_output.output_folder == "build/out"
+        assert cfg.dita_output.map_title == "My Documentation Set"
+        fn_rules = cfg.classification_rules["by_filename"]
+        ct_rules = cfg.classification_rules["by_content"]
+        assert len(fn_rules) == 1 and fn_rules[0].pattern == "index"
+        assert fn_rules[0].topic_type == "concept"
+        assert len(ct_rules) == 1 and ct_rules[0].pattern == "procedure"
+        assert ct_rules[0].topic_type == "task"
+
+
+class TestStrictLoading:
+    def test_unknown_top_level_key_raises(self, tmp_path):
+        path = _write_yaml(tmp_path, "typo_key: value\n")
+        with pytest.raises(ValueError, match="Unknown top-level config key"):
+            Config.load(path)
+
+    def test_unknown_tooling_key_raises(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            tooling:
+              pandoc_path: /bin/pandoc
+              typo: bad
+            """,
+        )
+        with pytest.raises(ValueError, match="Unknown config key"):
+            Config.load(path)
+
+    def test_unknown_dita_output_key_raises(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            dita_output:
+              output_folder: out
+              bad_key: x
+            """,
+        )
+        with pytest.raises(ValueError, match="Unknown config key"):
+            Config.load(path)
+
+    def test_unknown_chunking_key_raises(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            chunking:
+              level: 2
+              oops: true
+            """,
+        )
+        with pytest.raises(ValueError, match="Unknown config key"):
+            Config.load(path)
+
+    def test_unknown_extract_key_raises(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            """\
+            extract:
+              max_workers: 4
+              unknown_field: bad
+            """,
+        )
+        with pytest.raises(ValueError, match="Unknown config key"):
+            Config.load(path)
+
+    def test_unknown_classification_rule_key_raises(self, tmp_path):
+        path = _write_yaml(
+            tmp_path,
+            textwrap.dedent(
+                """\
+                classification_rules:
+                  by_filename:
+                    - match: index
+                      type: concept
+                      bad_key: oops
+                """
+            ),
+        )
+        with pytest.raises(ValueError, match="Unknown key"):
+            Config.load(path)

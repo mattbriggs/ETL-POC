@@ -22,12 +22,13 @@ dita_output:
   map_title: "My Documentation Set"
   dita_version: "1.3"
 
-# Override which extractor handles an extension
+# Extraction settings
 extract:
+  max_workers: 4             # parallel threads; null = auto (CPUs × 2)
   handler_overrides:
-    ".docx": "oxygen-docx"       # optional
+    ".docx": "oxygen-docx"  # override default Pandoc extractor for .docx
 
-# Topic-type classification rules (evaluated in order)
+# Topic-type classification rules (evaluated in order, highest priority first)
 classification_rules:
   by_filename:
     - match: "guide"
@@ -42,6 +43,33 @@ classification_rules:
     - match: "parameters"
       type: "reference"
 ```
+
+### Strict validation
+
+The config loader rejects unknown keys at every level and raises `ValueError`
+with the offending key names. This prevents silent misconfiguration from
+typos.
+
+### Classification rule matching
+
+`by_filename` patterns are matched against the **file stem** (without
+extension) using `fnmatch` glob syntax. `"index"` matches `index.md` and
+`index.html`; `"*reference*"` matches `api_reference.md`.
+
+`by_content` patterns are matched as case-insensitive regex against the full
+intermediate DocBook text.
+
+### Classification priority
+
+All five sources are evaluated in order; the first match wins:
+
+1. `by_filename` config rules
+2. `by_content` config rules
+3. Assess-stage plan hint (`default_topic_type` from `plans/*.conversion_plan.json`)
+4. Built-in heuristics (keyword density)
+5. Default → `concept`
+
+---
 
 ## `config/assess.yaml` — assessment config
 
@@ -82,6 +110,8 @@ duplication:
 limits:
   target_section_tokens: [50, 500]
 ```
+
+---
 
 ## Environment variables
 

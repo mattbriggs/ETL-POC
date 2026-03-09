@@ -93,6 +93,8 @@ def run_pipeline(
     extract_input = ExtractInput(
         source_paths=tuple(source_paths),
         intermediate_dir=intermediate_dir,
+        handler_overrides=cfg.extract.handler_overrides,
+        max_workers=cfg.extract.max_workers,
     )
     extract_output = extract_stage.run(extract_input)
     _LOG.info(
@@ -115,6 +117,7 @@ def run_pipeline(
         output_dir=topics_dir,
         rules_by_filename=tuple(cfg.classification_rules.get("by_filename", [])),
         rules_by_content=tuple(cfg.classification_rules.get("by_content", [])),
+        plans_dir=assess_output.plans_dir,
     )
     transform_output = transform_stage.run(transform_input)
     _LOG.info(

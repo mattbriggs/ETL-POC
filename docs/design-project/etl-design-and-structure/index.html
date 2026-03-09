@@ -1,0 +1,1081 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Composable pipeline for converting source documents to DITA XML">
+      
+      
+        <meta name="author" content="Heretto">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Content-to-DITA ETL: Vendor-Neutral, Modular Architecture - DITA ETL Pipeline</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#content-to-dita-etl-vendor-neutral-modular-architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="DITA ETL Pipeline" class="md-header__button md-logo" aria-label="DITA ETL Pipeline" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            DITA ETL Pipeline
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Content-to-DITA ETL: Vendor-Neutral, Modular Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/your-org/ETL-POC" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../pipeline/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../stages/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Stages
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/contracts/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="DITA ETL Pipeline" class="md-nav__button md-logo" aria-label="DITA ETL Pipeline" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    DITA ETL Pipeline
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/your-org/ETL-POC" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/transforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transforms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/assess/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assess
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="content-to-dita-etl-vendor-neutral-modular-architecture">Content-to-DITA ETL: Vendor-Neutral, Modular Architecture<a class="headerlink" href="#content-to-dita-etl-vendor-neutral-modular-architecture" title="Permanent link">&para;</a></h1>
+<h2 id="0-principles">0) Principles<a class="headerlink" href="#0-principles" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Isolate concerns</strong>: each stage does one job, I/O is explicit, and artifacts are immutable.</li>
+<li><strong>Contracts over tools</strong>: components communicate via documented schemas, not library quirks.</li>
+<li><strong>Deterministic</strong>: same inputs, same outputs. Hash every step.</li>
+<li><strong>Config-first</strong>: mappings, taxonomies, chunk rules, and output flavors live in versioned YAML/JSON.</li>
+<li><strong>Graceful degradation</strong>: partial extractions don't block the whole run; quarantine bad records.</li>
+<li><strong>Testable</strong>: every stage has fixtures and golden files.</li>
+</ul>
+<hr />
+<h2 id="1-pipeline-overview">1) Pipeline Overview<a class="headerlink" href="#1-pipeline-overview" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart LR
+  A[Source Corpus] --&gt; B[Extractors]
+  B --&gt; C[Canonical Interchange Model CIM]
+  C --&gt; D[Normalization]
+  D --&gt; E[Chunking &amp; Topicization]
+  E --&gt; F[Mapping to DITA Domain/Info Types]
+  F --&gt; G[Link/Media/Keyref Resolution]
+  G --&gt; H[Validation: XSD + Schematron + DITA Rules]
+  H --&gt; I[Packaging: DITA map/bundles]
+  I --&gt; J[Publish/Deliver or Hand-off]
+  H --&gt;|Failures| Q[Quarantine + Reports]</code></pre>
+<hr />
+<h2 id="2-data-contracts-the-glue-that-keeps-this-sane">2) Data Contracts (the glue that keeps this sane)<a class="headerlink" href="#2-data-contracts-the-glue-that-keeps-this-sane" title="Permanent link">&para;</a></h2>
+<h3 id="21-canonical-interchange-model-cim">2.1 Canonical Interchange Model (CIM)<a class="headerlink" href="#21-canonical-interchange-model-cim" title="Permanent link">&para;</a></h3>
+<p>A minimal, tool-neutral JSON structure every extractor must emit.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;doc_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;stable-id&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">&quot;source_meta&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot; &quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;md|docx|html|pdf| &quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;mtime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot; &quot;</span><span class="p">},</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">&quot;blocks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;heading&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">},</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;para&quot;</span><span class="p">,</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">},</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;list&quot;</span><span class="p">,</span><span class="nt">&quot;ordered&quot;</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">&quot;items&quot;</span><span class="p">:[</span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="s2">&quot;...&quot;</span><span class="p">]},</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;code&quot;</span><span class="p">,</span><span class="nt">&quot;lang&quot;</span><span class="p">:</span><span class="s2">&quot;python&quot;</span><span class="p">,</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">},</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;table&quot;</span><span class="p">,</span><span class="nt">&quot;rows&quot;</span><span class="p">:[[</span><span class="s2">&quot;H1&quot;</span><span class="p">,</span><span class="s2">&quot;H2&quot;</span><span class="p">],[</span><span class="s2">&quot;v1&quot;</span><span class="p">,</span><span class="s2">&quot;v2&quot;</span><span class="p">]]},</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;xref&quot;</span><span class="p">,</span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="s2">&quot;relative-or-absolute&quot;</span><span class="p">,</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">},</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;image&quot;</span><span class="p">,</span><span class="nt">&quot;src&quot;</span><span class="p">:</span><span class="s2">&quot;uri-or-blob-ref&quot;</span><span class="p">,</span><span class="nt">&quot;alt&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="nt">&quot;caption&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="nt">&quot;taxa&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;concept:x&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;product:y&quot;</span><span class="p">],</span><span class="w"> </span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">  </span><span class="nt">&quot;front_matter&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;author&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;keywords&quot;</span><span class="p">:[</span><span class="s2">&quot;...&quot;</span><span class="p">],</span><span class="w"> </span><span class="nt">&quot;abstract&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="22-normalized-topic-model-ntm">2.2 Normalized Topic Model (NTM)<a class="headerlink" href="#22-normalized-topic-model-ntm" title="Permanent link">&para;</a></h3>
+<p>After normalization and before DITA mapping:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;doc_id&quot;</span><span class="p">:</span><span class="s2">&quot;stable-id&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;language&quot;</span><span class="p">:</span><span class="s2">&quot;en&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">&quot;topics&quot;</span><span class="p">:[</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">      </span><span class="nt">&quot;topic_id&quot;</span><span class="p">:</span><span class="s2">&quot;t-001&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="nt">&quot;topic_role&quot;</span><span class="p">:</span><span class="s2">&quot;concept|task|reference|generic&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="s2">&quot; &quot;</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="nt">&quot;prolog&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;keywords&quot;</span><span class="p">:[</span><span class="s2">&quot; &quot;</span><span class="p">],</span><span class="w"> </span><span class="nt">&quot;audience&quot;</span><span class="p">:[</span><span class="s2">&quot; &quot;</span><span class="p">],</span><span class="w"> </span><span class="nt">&quot;product&quot;</span><span class="p">:[</span><span class="s2">&quot; &quot;</span><span class="p">]},</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">      </span><span class="nt">&quot;body&quot;</span><span class="p">:[</span><span class="w"> </span><span class="cm">/* block list like CIM, but cleaned */</span><span class="w"> </span><span class="p">],</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">      </span><span class="nt">&quot;relations&quot;</span><span class="p">:[</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;rel&quot;</span><span class="p">:</span><span class="s2">&quot;xref&quot;</span><span class="p">,</span><span class="nt">&quot;target_id&quot;</span><span class="p">:</span><span class="s2">&quot;t-002&quot;</span><span class="p">,</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="s2">&quot;See also  &quot;</span><span class="p">},</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;rel&quot;</span><span class="p">:</span><span class="s2">&quot;media&quot;</span><span class="p">,</span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="s2">&quot;media/fig-1.png&quot;</span><span class="p">,</span><span class="nt">&quot;alt&quot;</span><span class="p">:</span><span class="s2">&quot; &quot;</span><span class="p">}</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">      </span><span class="p">]</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">  </span><span class="nt">&quot;keys&quot;</span><span class="p">:[</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;key&quot;</span><span class="p">:</span><span class="s2">&quot;prodA&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;href&quot;</span><span class="p">:</span><span class="s2">&quot;topics/prodA.dita&quot;</span><span class="p">}</span><span class="w"> </span><span class="p">]</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="3-stages-and-responsibilities">3) Stages and Responsibilities<a class="headerlink" href="#3-stages-and-responsibilities" title="Permanent link">&para;</a></h2>
+<h3 id="31-extractors-ingest-anything">3.1 Extractors (ingest anything)<a class="headerlink" href="#31-extractors-ingest-anything" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Responsibility</strong>: parse native format into CIM.</li>
+<li><strong>Adapters</strong>: md, docx, html, pdf+OCR, gdocs export, pptx, Confluence export, bespoke CMS dumps.</li>
+<li><strong>Rules</strong>:</li>
+<li>Never guess structure beyond what's present. Don't invent headings from bold text unless configured.</li>
+<li>Emit unparsed residues to <code>blocks:[{type:"raw", format:"...", data:"..."}]</code> for later handling.</li>
+</ul>
+<p><strong>Extractor Interface (pseudocode)</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Extractor</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">sniff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_or_bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_or_bytes</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CIM</span><span class="p">:</span> <span class="o">...</span>
+</code></pre></div></p>
+<h3 id="32-normalization">3.2 Normalization<a class="headerlink" href="#32-normalization" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Tasks</strong>: canonicalize whitespace, fix heading levels, unwrap hard line breaks, standardize tables, resolve relative links, unify code blocks, detect languages.</li>
+<li><strong>I/O</strong>: CIM in, NTM out.</li>
+<li><strong>Enforce</strong>:</li>
+<li>Unique stable IDs for blocks and prospective topics.</li>
+<li>Language tags (BCP 47).</li>
+<li>Taxonomy normalization to SKOS/URIs if provided.</li>
+</ul>
+<h3 id="33-chunking-topicization">3.3 Chunking &amp; Topicization<a class="headerlink" href="#33-chunking-topicization" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Goal</strong>: split content into DITA-sized atomic topics using deterministic rules.</li>
+<li><strong>Strategies</strong> (configurable):</li>
+<li>By heading depth</li>
+<li>By semantic cues (procedure, prerequisites, parameters)</li>
+<li>By token budget (useful for RAG later, but remain DITA-compliant)</li>
+<li><strong>Output</strong>: NTM with topic boundaries and suggested topic types.</li>
+</ul>
+<p><strong>Example rules (YAML)</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">chunking</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">by_heading_levels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="nv">2</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">min_topic_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">120</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">max_topic_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1200</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">prefer_semantic_cues</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nt">topic_typing</span><span class="p">:</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="nt">heuristics</span><span class="p">:</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">if_contains</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;Steps:&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;Procedure&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-&gt; task</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">if_tables_over</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2 -&gt; reference</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">concept</span>
+</code></pre></div></p>
+<h3 id="34-mapping-to-dita">3.4 Mapping to DITA<a class="headerlink" href="#34-mapping-to-dita" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Responsibility</strong>: map NTM blocks to DITA elements and info types.</li>
+<li><strong>Mechanics</strong>:</li>
+<li><code>topic_role</code> drives shell selection: <code>&lt;concept&gt;</code>, <code>&lt;task&gt;</code>, <code>&lt;reference&gt;</code> or <code>&lt;topic&gt;</code>.</li>
+<li>Map lists, code, tables, images into legal DITA structures.</li>
+<li>Map metadata into <code>&lt;prolog&gt;</code>: <code>&lt;keywords&gt;</code>, <code>&lt;audience&gt;</code>, <code>&lt;prodinfo&gt;</code>, <code>&lt;resourceid&gt;</code>, etc.</li>
+<li>Generate <code>@id</code> consistently; avoid collisions.</li>
+</ul>
+<p><strong>Mapping config (YAML)</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">dita</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">shells</span><span class="p">:</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">concept</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;concept&quot;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">task</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;task&quot;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">reference</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;reference&quot;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="nt">metadata</span><span class="p">:</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="nt">keywords_from</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;front_matter.keywords&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;taxa&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="nt">product_from</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;taxa^product:&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span><span class="nt">image_policy</span><span class="p">:</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span><span class="nt">store</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;media/&quot;</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">    </span><span class="nt">rename</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hash-prefix&quot;</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span><span class="nt">crossrefs</span><span class="p">:</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="nt">prefer_keyref</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div></p>
+<h3 id="35-link-media-and-keyref-resolution">3.5 Link, Media, and Keyref Resolution<a class="headerlink" href="#35-link-media-and-keyref-resolution" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Convert internal <code>relations</code> to:</li>
+<li><code>xref/@keyref</code> when target has a key in the map</li>
+<li><code>xref/@href</code> with managed relative paths otherwise</li>
+<li>Media: copy into a deterministic <code>media/</code> and rewrite <code>@href</code>.</li>
+<li>Keys: generate a single source of truth key table used by the bookmap/map.</li>
+</ul>
+<h3 id="36-validation">3.6 Validation<a class="headerlink" href="#36-validation" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Layers</strong>:
+  1) XML well-formedness
+  2) XSD/DTD conformance for your DITA version and domains
+  3) Schematron for house rules (IDs, title presence, alt text, list purity, no orphaned refs)
+  4) Graph checks: every <code>xref</code> or <code>keyref</code> resolves; no cycles where forbidden</li>
+<li><strong>Outputs</strong>: JUnit-style XML + human report; failing files copied to <code>quarantine/</code>.</li>
+</ul>
+<h3 id="37-packaging">3.7 Packaging<a class="headerlink" href="#37-packaging" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Build DITA maps or bookmaps from topic graph and key table.</li>
+<li>Generate output tree:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>out/
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  topics/*.dita
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  maps/main.ditamap
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  media/*
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  keys/keys.ditamap   # optional, if you split keys
+</code></pre></div></li>
+<li>Optionally emit a manifest JSON with hashes for CI/CD caching.</li>
+</ul>
+<hr />
+<h2 id="4-filesystem-layout">4) Filesystem Layout<a class="headerlink" href="#4-filesystem-layout" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>project/
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  config/
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    sources.yaml
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    mapping.dita.yaml
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    chunking.yaml
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    schematron/
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>      rules.sch
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>  in/
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    raw/...
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>  work/
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    cim/          # JSON from extractors
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    ntm/          # normalized topic model
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    logs/
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>  out/
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    topics/
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    maps/
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    media/
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>    reports/
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>  quarantine/
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    bad_cim/
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>    bad_xml/
+</code></pre></div>
+<hr />
+<h2 id="5-configuration-examples">5) Configuration Examples<a class="headerlink" href="#5-configuration-examples" title="Permanent link">&para;</a></h2>
+<h3 id="51-sources">5.1 Sources<a class="headerlink" href="#51-sources" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">sources</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">md_docs</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">glob</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;in/raw/**/*.md&quot;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nt">extractor</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;markdown&quot;</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="nt">options</span><span class="p">:</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">      </span><span class="nt">front_matter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">yaml</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">gfm_tables</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docx</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="nt">glob</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;in/raw/**/*.docx&quot;</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="nt">extractor</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;docx&quot;</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="nt">options</span><span class="p">:</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">      </span><span class="nt">keep_comments</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<h3 id="52-schematron-rule-snippets">5.2 Schematron Rule Snippets<a class="headerlink" href="#52-schematron-rule-snippets" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">&lt;sch:pattern</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;alt-text&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">&lt;sch:rule</span><span class="w"> </span><span class="na">context=</span><span class="s">&quot;*[contains(name(),&#39;image&#39;)]&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nt">&lt;sch:assert</span><span class="w"> </span><span class="na">test=</span><span class="s">&quot;@alt and normalize-space(@alt) != &#39;&#39;&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">      </span>Image<span class="w"> </span>must<span class="w"> </span>have<span class="w"> </span>alt<span class="w"> </span>text.
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="nt">&lt;/sch:assert&gt;</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span><span class="nt">&lt;/sch:rule&gt;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nt">&lt;/sch:pattern&gt;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="nt">&lt;sch:pattern</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;task-structure&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">  </span><span class="nt">&lt;sch:rule</span><span class="w"> </span><span class="na">context=</span><span class="s">&quot;task&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="nt">&lt;sch:assert</span><span class="w"> </span><span class="na">test=</span><span class="s">&quot;taskbody/steps&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">      </span>Task<span class="w"> </span>must<span class="w"> </span>contain<span class="w"> </span>steps.
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">    </span><span class="nt">&lt;/sch:assert&gt;</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">  </span><span class="nt">&lt;/sch:rule&gt;</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="nt">&lt;/sch:pattern&gt;</span>
+</code></pre></div>
+<hr />
+<h2 id="6-extensibility">6) Extensibility<a class="headerlink" href="#6-extensibility" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>New format?</strong> Write a new <code>Extractor</code>, output CIM, done.</li>
+<li><strong>Different DITA flavor?</strong> Swap <code>mapping.dita.yaml</code> and your domain shells.</li>
+<li><strong>RAG-friendly chunks?</strong> Tweak chunking rules; you still emit valid DITA topics.</li>
+<li><strong>Taxonomy</strong>: back your <code>taxa</code> with SKOS URIs in config; map to <code>&lt;keywords&gt;</code> or <code>&lt;subjectScheme&gt;</code>.</li>
+</ul>
+<hr />
+<h2 id="7-ids-reuse-and-keys">7) IDs, Reuse, and Keys<a class="headerlink" href="#7-ids-reuse-and-keys" title="Permanent link">&para;</a></h2>
+<ul>
+<li>IDs: <code>stable-id = namespace + normalized-title + short-hash(block-contents)</code>.</li>
+<li>Reuse:</li>
+<li>Detect high-similarity blocks during normalization; emit shared topics and conref them.</li>
+<li>Use <code>keyref</code> for cross-collection stability across repos.</li>
+<li>Keyspace:</li>
+<li>One <code>keys.ditamap</code> per deliverable; keys derive from titles or SKOS prefLabels.</li>
+</ul>
+<hr />
+<h2 id="8-error-handling-observability">8) Error Handling &amp; Observability<a class="headerlink" href="#8-error-handling-observability" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Per-doc ledger</strong>: status, timings, hashes, warnings.</li>
+<li><strong>Metrics</strong>: number of topics, average tokens per topic, validation failure counts, orphan link counts.</li>
+<li><strong>Artifacts on failure</strong>: original source, CIM, NTM, and failing XML side by side for diffing.</li>
+</ul>
+<hr />
+<h2 id="9-testing-strategy">9) Testing Strategy<a class="headerlink" href="#9-testing-strategy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Fixtures</strong>: tiny representative samples for every extractor.</li>
+<li><strong>Golden files</strong>: committed DITA outputs; CI diffs on PRs.</li>
+<li><strong>Property tests</strong>: idempotency (run twice, hashes match), link closure, no duplicate IDs.</li>
+<li><strong>Regression</strong>: a corpus of nasty edge cases (lists in tables, code in lists, unicode weirdness).</li>
+</ul>
+<hr />
+<h2 id="10-example-from-cim-to-dita-task-sketch">10) Example: From CIM to DITA Task (sketch)<a class="headerlink" href="#10-example-from-cim-to-dita-task-sketch" title="Permanent link">&para;</a></h2>
+<h3 id="input-ntm-topic-body-simplified">Input NTM topic body (simplified)<a class="headerlink" href="#input-ntm-topic-body-simplified" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">&quot;topic_id&quot;</span><span class="p">:</span><span class="s2">&quot;t-install&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="nt">&quot;topic_role&quot;</span><span class="p">:</span><span class="s2">&quot;task&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="s2">&quot;Install Widget A&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="nt">&quot;body&quot;</span><span class="p">:[</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;para&quot;</span><span class="p">,</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="s2">&quot;Use this to set up Widget A.&quot;</span><span class="p">},</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;list&quot;</span><span class="p">,</span><span class="nt">&quot;ordered&quot;</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">&quot;items&quot;</span><span class="p">:[</span><span class="s2">&quot;Download installer&quot;</span><span class="p">,</span><span class="s2">&quot;Run the installer&quot;</span><span class="p">,</span><span class="s2">&quot;Verify version&quot;</span><span class="p">]},</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="s2">&quot;xref&quot;</span><span class="p">,</span><span class="nt">&quot;target_id&quot;</span><span class="p">:</span><span class="s2">&quot;t-troubleshooting&quot;</span><span class="p">,</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="s2">&quot;Troubleshooting&quot;</span><span class="p">}</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="output-dita-task">Output DITA (task)<a class="headerlink" href="#output-dita-task" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="cp">&lt;!DOCTYPE task PUBLIC &quot;-//OASIS//DTD DITA Task//EN&quot; &quot;task.dtd&quot;&gt;</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nt">&lt;task</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;t-install&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nt">&lt;title&gt;</span>Install<span class="w"> </span>Widget<span class="w"> </span>A<span class="nt">&lt;/title&gt;</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="nt">&lt;shortdesc&gt;</span>Use<span class="w"> </span>this<span class="w"> </span>to<span class="w"> </span>set<span class="w"> </span>up<span class="w"> </span>Widget<span class="w"> </span>A.<span class="nt">&lt;/shortdesc&gt;</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="nt">&lt;taskbody&gt;</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="nt">&lt;steps&gt;</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">      </span><span class="nt">&lt;step&gt;&lt;cmd&gt;</span>Download<span class="w"> </span>installer<span class="nt">&lt;/cmd&gt;&lt;/step&gt;</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">      </span><span class="nt">&lt;step&gt;&lt;cmd&gt;</span>Run<span class="w"> </span>the<span class="w"> </span>installer<span class="nt">&lt;/cmd&gt;&lt;/step&gt;</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">      </span><span class="nt">&lt;step&gt;&lt;cmd&gt;</span>Verify<span class="w"> </span>version<span class="nt">&lt;/cmd&gt;&lt;/step&gt;</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">    </span><span class="nt">&lt;/steps&gt;</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">    </span><span class="nt">&lt;related-links&gt;</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">      </span><span class="nt">&lt;link</span><span class="w"> </span><span class="na">keyref=</span><span class="s">&quot;t-troubleshooting&quot;</span><span class="nt">&gt;</span>Troubleshooting<span class="nt">&lt;/link&gt;</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">    </span><span class="nt">&lt;/related-links&gt;</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">  </span><span class="nt">&lt;/taskbody&gt;</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="nt">&lt;/task&gt;</span>
+</code></pre></div>
+<hr />
+<h2 id="11-minimal-orchestration-pseudocode">11) Minimal Orchestration Pseudocode<a class="headerlink" href="#11-minimal-orchestration-pseudocode" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">run_pipeline</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="n">sources</span> <span class="o">=</span> <span class="n">load_sources</span><span class="p">(</span><span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;sources&quot;</span><span class="p">])</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="k">for</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">expand_glob</span><span class="p">(</span><span class="n">src</span><span class="p">[</span><span class="s2">&quot;glob&quot;</span><span class="p">]):</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>            <span class="n">cim</span> <span class="o">=</span> <span class="n">REGISTRY</span><span class="o">.</span><span class="n">extractor</span><span class="p">(</span><span class="n">src</span><span class="p">[</span><span class="s2">&quot;extractor&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;options&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>            <span class="n">write_json</span><span class="p">(</span><span class="s2">&quot;work/cim&quot;</span><span class="p">,</span> <span class="n">cim</span><span class="o">.</span><span class="n">doc_id</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span><span class="p">,</span> <span class="n">cim</span><span class="p">)</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="k">for</span> <span class="n">cim_path</span> <span class="ow">in</span> <span class="n">glob</span><span class="p">(</span><span class="s2">&quot;work/cim/*.json&quot;</span><span class="p">):</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>        <span class="n">cim</span> <span class="o">=</span> <span class="n">read_json</span><span class="p">(</span><span class="n">cim_path</span><span class="p">)</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>        <span class="n">ntm</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">cim</span><span class="p">,</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;normalization&quot;</span><span class="p">])</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>        <span class="n">ntm</span> <span class="o">=</span> <span class="n">chunk_and_type</span><span class="p">(</span><span class="n">ntm</span><span class="p">,</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;chunking&quot;</span><span class="p">],</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;topic_typing&quot;</span><span class="p">])</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>        <span class="n">write_json</span><span class="p">(</span><span class="s2">&quot;work/ntm&quot;</span><span class="p">,</span> <span class="n">ntm</span><span class="o">.</span><span class="n">doc_id</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span><span class="p">,</span> <span class="n">ntm</span><span class="p">)</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>    <span class="k">for</span> <span class="n">ntm_path</span> <span class="ow">in</span> <span class="n">glob</span><span class="p">(</span><span class="s2">&quot;work/ntm/*.json&quot;</span><span class="p">):</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>        <span class="n">ntm</span> <span class="o">=</span> <span class="n">read_json</span><span class="p">(</span><span class="n">ntm_path</span><span class="p">)</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>        <span class="n">topics</span> <span class="o">=</span> <span class="n">map_to_dita</span><span class="p">(</span><span class="n">ntm</span><span class="p">,</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;dita&quot;</span><span class="p">])</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>        <span class="n">media_manifest</span> <span class="o">=</span> <span class="n">resolve_media</span><span class="p">(</span><span class="n">topics</span><span class="p">,</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;dita&quot;</span><span class="p">][</span><span class="s2">&quot;image_policy&quot;</span><span class="p">])</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>        <span class="n">write_topics</span><span class="p">(</span><span class="n">topics</span><span class="p">,</span> <span class="s2">&quot;out/topics&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>    <span class="n">map_path</span> <span class="o">=</span> <span class="n">build_map</span><span class="p">(</span><span class="s2">&quot;out/topics&quot;</span><span class="p">,</span> <span class="s2">&quot;out/maps&quot;</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="n">generate_keys</span><span class="p">())</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">validate</span><span class="p">(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;validation&quot;</span><span class="p">])</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>    <span class="n">write_reports</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="s2">&quot;out/reports&quot;</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="12-migrationadoption-tips">12) Migration/Adoption Tips<a class="headerlink" href="#12-migrationadoption-tips" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Start with one upstream format and one DITA shell. Prove the pattern.</li>
+<li>Lock down IDs early; changing them later wrecks link integrity.</li>
+<li>Write Schematron rules to reflect editorial policy. It pays off immediately.</li>
+<li>Keep chunking conservative at first. More topics is not always better.</li>
+</ul>
+<hr />
+<h2 id="13-what-you-can-swap-in-without-breaking-the-contract">13) What you can swap in without breaking the contract<a class="headerlink" href="#13-what-you-can-swap-in-without-breaking-the-contract" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Extractors: Pandoc, python-docx, jsdom, Tika, custom HTML scrapers, OCR engines</li>
+<li>Normalization: your own AST walkers, regex passes, language detectors</li>
+<li>Validation: Xerces, Jing, Saxon + Schematron, DITA-OT's preprocessor</li>
+<li>Orchestration: Make, Nix, Airflow, Prefect, plain Python CLI, whatever helps you sleep</li>
+</ul>
+<hr />
+<h2 id="14-deliverables-checklist-so-this-doesnt-sprawl">14) Deliverables Checklist (so this doesn't sprawl)<a class="headerlink" href="#14-deliverables-checklist-so-this-doesnt-sprawl" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>schemas/</code> for CIM and NTM (JSON Schema)  </li>
+<li><code>config/</code> with sample <code>sources.yaml</code>, <code>chunking.yaml</code>, <code>mapping.dita.yaml</code>  </li>
+<li><code>schematron/</code> with at least 5 core rules  </li>
+<li>A tiny example corpus and the resulting DITA map with 3 topics  </li>
+<li>CI job that runs the pipeline, validates, and attaches reports</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>
